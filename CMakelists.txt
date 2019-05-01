@@ -12,5 +12,10 @@ find_package(glm REQUIRED)
 if (VULKAN_FOUND)
     message(STATUS "Found Vulkan, Including and Linking now")
     include_directories(${Vulkan_INCLUDE_DIRS})
-    target_link_libraries (${PROJECT_NAME} ${Vulkan_LIBRARIES} glfw glm)
+    target_link_libraries (
+        ${PROJECT_NAME}
+        /Users/olegvoloshin/dev/lib/vulkansdk-macos-1.1.106.0/macOS/lib/libvulkan.dylib
+        glfw
+        glm
+    )
 endif (VULKAN_FOUND)
