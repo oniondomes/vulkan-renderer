@@ -2,12 +2,11 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
-#include <stdexcept>
-#include <functional>
-#include <cstdlib>
 #include <vector>
 #include <cstring>
 #include <cstdlib>
+
+#include "optional.hpp"
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -45,24 +44,12 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 
 struct QueueFamilyIndices
 {
-private:
-    // index of queue family that supports graphic commands
-    int32_t graphicsFamily = -1;
+    std::experimental::optional<uint32_t> presentFamily;
+    std::experimental::optional<uint32_t> graphicsFamily;
 
-public:
     bool isComplete()
     {
-        return graphicsFamily != -1;
-    }
-
-    void operator=(int index)
-    {
-        graphicsFamily = index;
-    }
-
-    uint32_t value()
-    {
-        return graphicsFamily;
+        return graphicsFamily.has_value();
     }
 };
 
@@ -294,7 +281,7 @@ private:
         {
             if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
             {
-                indices = i;
+                indices.graphicsFamily = i;
                 break;
             }
         }
@@ -308,7 +295,7 @@ private:
 
         VkDeviceQueueCreateInfo queueCreateInfo = {};
         queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queueCreateInfo.queueFamilyIndex = indices.value();
+        queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
         queueCreateInfo.queueCount = 1;
 
         float queuePriority = 1.0f;
@@ -341,7 +328,7 @@ private:
             throw std::runtime_error("failed to create logical device!");
         }
 
-        vkGetDeviceQueue(device, indices.value(), 0, &graphicsQueue);
+        vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
     }
 };
 
