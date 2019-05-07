@@ -14,7 +14,7 @@ if (VULKAN_FOUND)
     include_directories(${Vulkan_INCLUDE_DIRS})
     target_link_libraries (
         ${PROJECT_NAME}
-        /Users/olegvoloshin/dev/lib/vulkansdk-macos-1.1.106.0/macOS/lib/libvulkan.dylib
+        $ENV{VULKAN_SDK}/lib/libvulkan.dylib
         glfw
         glm
     )
