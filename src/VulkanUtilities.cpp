@@ -263,3 +263,22 @@ int VulkanUtilities::createLogicalDevice(
     }
     return 0;
 }
+
+int VulkanUtilities::createCommandPool(
+    const VkDevice& device,
+    VkCommandPool& commandPool,
+    QueueFamilyIndices& queueFamilyIndices)
+{
+    VkCommandPoolCreateInfo createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    createInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+    createInfo.flags = 0;
+
+    if (vkCreateCommandPool(device, &createInfo, nullptr, &commandPool) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Unable to create command pool!");
+        return 3;
+    }
+
+    return 0;
+}

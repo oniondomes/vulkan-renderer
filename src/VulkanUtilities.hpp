@@ -11,6 +11,7 @@ public:
     static bool isDeviceSuitable(const VkPhysicalDevice& device, VkSurfaceKHR& surface);
     static SwapChainSupportDetails querySwapChainSupport(const VkPhysicalDevice& device, VkSurfaceKHR& surface);
     static QueueFamilyIndices getGraphicsQueueFamilyIndex(const VkPhysicalDevice& device, VkSurfaceKHR& surface);
+    static int createCommandPool(const VkDevice& device, VkCommandPool& commandPool, QueueFamilyIndices& queueFamilyIndices);
 
     static int createLogicalDevice(const VkPhysicalDevice physicalDevice, std::set<u_int32_t> &queuesIndices, VkPhysicalDeviceFeatures& deviceFeatures, VkDevice& device);
 
