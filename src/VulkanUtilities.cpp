@@ -1,9 +1,13 @@
 #include <fstream>
 #include "VulkanUtilities.hpp"
 
-const std::vector<const char*> deviceExtensions = {
-	VK_KHR_SWAPCHAIN_EXTENSION_NAME
-};
+const std::vector<const char *> deviceExtensions = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+
+const std::vector<const char *> validationLayers = {
+    "VK_LAYER_KHRONOS_validation"};
+
+bool VulkanUtilities::enableValidationLayers = true;
 
 bool checkDeviceExtensionsSupport(VkPhysicalDevice device)
 {
@@ -133,7 +137,6 @@ bool VulkanUtilities::isDeviceSuitable(const VkPhysicalDevice &device, VkSurface
     VkPhysicalDeviceFeatures supportedDeviceFeatures;
     vkGetPhysicalDeviceFeatures(device, &supportedDeviceFeatures);
 
-
     if (extensionsSupported)
     {
         SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device, surface);
@@ -143,10 +146,10 @@ bool VulkanUtilities::isDeviceSuitable(const VkPhysicalDevice &device, VkSurface
     return extensionsSupported && isComplete && swapChainAdequate && supportedDeviceFeatures.samplerAnisotropy;
 }
 
-int VulkanUtilities::pickPhysicalDevice(VkInstance &instance, VkSurfaceKHR &surface, VkPhysicalDevice &device)
+int VulkanUtilities::pickPhysicalDevice(VkInstance &instance, VkSurfaceKHR &surface, VkPhysicalDevice &physicalDevice)
 {
     // Reset physical device.
-    device = VK_NULL_HANDLE;
+    physicalDevice = VK_NULL_HANDLE;
 
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
@@ -163,15 +166,16 @@ int VulkanUtilities::pickPhysicalDevice(VkInstance &instance, VkSurfaceKHR &surf
     {
         if (isDeviceSuitable(deviceCandidate, surface))
         {
-            device = deviceCandidate;
+            physicalDevice = deviceCandidate;
             break;
         }
     }
 
-    if (device == VK_NULL_HANDLE)
+    if (physicalDevice == VK_NULL_HANDLE)
     {
         throw std::runtime_error("failed to find suitable GPU!");
     }
+
     return 0;
 }
 
@@ -211,4 +215,51 @@ QueueFamilyIndices VulkanUtilities::getGraphicsQueueFamilyIndex(const VkPhysical
     }
 
     return indices;
+}
+
+int VulkanUtilities::createLogicalDevice(
+    const VkPhysicalDevice physicalDevice,
+    std::set<u_int32_t> &queuesIndices,
+    VkPhysicalDeviceFeatures &deviceFeatures,
+    VkDevice &device)
+{
+    float queuePriority = 1.0f;
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+
+    for (uint32_t queueFamilyIndex : queuesIndices)
+    {
+        VkDeviceQueueCreateInfo queueCreateInfo = {};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = queueFamilyIndex;
+        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
+        queueCreateInfos.push_back(queueCreateInfo);
+    }
+
+    // Device setup.
+    VkDeviceCreateInfo createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    createInfo.pQueueCreateInfos = queueCreateInfos.data();
+    createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+    createInfo.pEnabledFeatures = &deviceFeatures;
+
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+    createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+
+    if (enableValidationLayers)
+    {
+        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+        createInfo.ppEnabledLayerNames = validationLayers.data();
+    }
+    else
+    {
+        createInfo.enabledLayerCount = 0;
+    }
+
+    if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
+    {
+        std::cerr << "Unable to create logical Vulkan device." << std::endl;
+        return 3;
+    }
+    return 0;
 }
