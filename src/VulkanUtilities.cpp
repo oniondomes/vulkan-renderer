@@ -64,7 +64,7 @@ VkPresentModeKHR VulkanUtilities::chooseSwapPresentMode(const std::vector<VkPres
     return bestFitMode;
 }
 
-VkExtent2D VulkanUtilities::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities)
+VkExtent2D VulkanUtilities::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities, const int width, const int height)
 {
     if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
     {
@@ -72,7 +72,8 @@ VkExtent2D VulkanUtilities::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &cap
     }
     else
     {
-        VkExtent2D actualExtent = {WIDTH, HEIGHT};
+
+        VkExtent2D actualExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
 
         actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
         actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
@@ -101,9 +102,11 @@ std::vector<char> VulkanUtilities::readFile(const std::string &filename)
     return buffer;
 }
 
-SwapChainSupportDetails VulkanUtilities::querySwapChainSupport(const VkPhysicalDevice &device, VkSurfaceKHR &surface)
+VulkanUtilities::SwapchainSupportDetails VulkanUtilities::querySwapchainSupport(
+    const VkPhysicalDevice &device,
+    VkSurfaceKHR &surface)
 {
-    SwapChainSupportDetails details;
+    VulkanUtilities::SwapchainSupportDetails details;
 
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
 
@@ -139,7 +142,7 @@ bool VulkanUtilities::isDeviceSuitable(const VkPhysicalDevice &device, VkSurface
 
     if (extensionsSupported)
     {
-        SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device, surface);
+        VulkanUtilities::SwapchainSupportDetails swapChainSupport = VulkanUtilities::querySwapchainSupport(device, surface);
         swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
     }
 
@@ -265,9 +268,9 @@ int VulkanUtilities::createLogicalDevice(
 }
 
 int VulkanUtilities::createCommandPool(
-    const VkDevice& device,
-    VkCommandPool& commandPool,
-    QueueFamilyIndices& queueFamilyIndices)
+    const VkDevice &device,
+    VkCommandPool &commandPool,
+    QueueFamilyIndices &queueFamilyIndices)
 {
     VkCommandPoolCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -282,3 +285,22 @@ int VulkanUtilities::createCommandPool(
 
     return 0;
 }
+
+VulkanUtilities::SwapchainParameters VulkanUtilities::generateSwapchainParameters(
+    VkPhysicalDevice &physicalDevice,
+    VkSurfaceKHR &surface,
+    const int width,
+    const int height)
+{
+    VulkanUtilities::SwapchainParameters params;
+
+    params.support = VulkanUtilities::querySwapchainSupport(physicalDevice, surface);
+    params.extent = VulkanUtilities::chooseSwapExtent(params.support.capabilities, width, height);
+    params.surface = VulkanUtilities::chooseSwapSurfaceFormat(params.support.formats);
+    params.mode = VulkanUtilities::chooseSwapPresentMode(params.support.presentModes);
+
+    std::cout << "Swapchain min img count: " << params.support.capabilities.minImageCount << ". Swapchain max img count: " << params.support.capabilities.maxImageCount << std::endl;
+
+    params.imageCount = params.support.capabilities.minImageCount + 1;
+    return params;
+};

@@ -302,11 +302,11 @@ private:
 
     void createSwapChain()
     {
-        SwapChainSupportDetails swapChainSupport = VulkanUtilities::querySwapChainSupport(physicalDevice, surface);
+        VulkanUtilities::SwapchainSupportDetails swapChainSupport = VulkanUtilities::querySwapchainSupport(physicalDevice, surface);
 
         VkSurfaceFormatKHR surfaceFormat = VulkanUtilities::chooseSwapSurfaceFormat(swapChainSupport.formats);
         VkPresentModeKHR presentMode = VulkanUtilities::chooseSwapPresentMode(swapChainSupport.presentModes);
-        VkExtent2D extent = VulkanUtilities::chooseSwapExtent(swapChainSupport.capabilities);
+        VkExtent2D extent = VulkanUtilities::chooseSwapExtent(swapChainSupport.capabilities, WIDTH, HEIGHT);
 
         uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
 
