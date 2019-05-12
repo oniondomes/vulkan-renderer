@@ -302,27 +302,16 @@ private:
 
     void createSwapChain()
     {
-        VulkanUtilities::SwapchainSupportDetails swapChainSupport = VulkanUtilities::querySwapchainSupport(physicalDevice, surface);
-
-        VkSurfaceFormatKHR surfaceFormat = VulkanUtilities::chooseSwapSurfaceFormat(swapChainSupport.formats);
-        VkPresentModeKHR presentMode = VulkanUtilities::chooseSwapPresentMode(swapChainSupport.presentModes);
-        VkExtent2D extent = VulkanUtilities::chooseSwapExtent(swapChainSupport.capabilities, WIDTH, HEIGHT);
-
-        uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
-
-        if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
-        {
-            imageCount = swapChainSupport.capabilities.maxImageCount;
-        }
+        VulkanUtilities::SwapchainParameters swapchainParams = VulkanUtilities::generateSwapchainParameters(physicalDevice, surface, WIDTH, HEIGHT);
 
         VkSwapchainCreateInfoKHR createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         createInfo.surface = surface;
 
-        createInfo.minImageCount = imageCount;
-        createInfo.imageFormat = surfaceFormat.format;
-        createInfo.imageColorSpace = surfaceFormat.colorSpace;
-        createInfo.imageExtent = extent;
+        createInfo.minImageCount = swapchainParams.imageCount;
+        createInfo.imageFormat = swapchainParams.surface.format;
+        createInfo.imageColorSpace = swapchainParams.surface.colorSpace;
+        createInfo.imageExtent = swapchainParams.extent;
         createInfo.imageArrayLayers = 1;
         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
@@ -342,9 +331,9 @@ private:
             createInfo.pQueueFamilyIndices = nullptr;
         }
 
-        createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+        createInfo.preTransform = swapchainParams.support.capabilities.currentTransform;
         createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-        createInfo.presentMode = presentMode;
+        createInfo.presentMode = swapchainParams.mode;
         createInfo.clipped = VK_TRUE;
         createInfo.oldSwapchain = VK_NULL_HANDLE;
 
@@ -353,12 +342,12 @@ private:
             throw std::runtime_error("failed to create swap chain!");
         }
 
-        vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
-        swapChainImages.resize(imageCount);
-        vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+        vkGetSwapchainImagesKHR(device, swapChain, &swapchainParams.imageCount, nullptr);
+        swapChainImages.resize(swapchainParams.imageCount);
+        vkGetSwapchainImagesKHR(device, swapChain, &swapchainParams.imageCount, swapChainImages.data());
 
-        swapChainImageFormat = surfaceFormat.format;
-        swapChainExtent = extent;
+        swapChainImageFormat = swapchainParams.surface.format;
+        swapChainExtent = swapchainParams.extent;
     }
 
     void createImageViews()
