@@ -1,7 +1,8 @@
 project(vulkanDemo)
 cmake_minimum_required(VERSION 3.10)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11  " )
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11")
 
 add_executable(${PROJECT_NAME} src/main.cpp src/VulkanUtilities.cpp)
 
@@ -10,11 +11,11 @@ find_package(glfw3 3.3 REQUIRED)
 find_package(glm REQUIRED)
 
 if (VULKAN_FOUND)
-    message(STATUS "Found Vulkan, Including and Linking now")
     include_directories(${Vulkan_INCLUDE_DIRS})
+
     target_link_libraries (
         ${PROJECT_NAME}
-        $ENV{VULKAN_SDK}/lib/libvulkan.dylib
+        ${Vulkan_LIBRARY}
         glfw
         glm
     )
