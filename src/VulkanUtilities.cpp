@@ -299,8 +299,11 @@ VulkanUtilities::SwapchainParameters VulkanUtilities::generateSwapchainParameter
     params.surface = VulkanUtilities::chooseSwapSurfaceFormat(params.support.formats);
     params.mode = VulkanUtilities::chooseSwapPresentMode(params.support.presentModes);
 
-    std::cout << "Swapchain min img count: " << params.support.capabilities.minImageCount << ". Swapchain max img count: " << params.support.capabilities.maxImageCount << std::endl;
+    uint32_t imageCount = params.support.capabilities.minImageCount + 1;
+    if (params.support.capabilities.maxImageCount > 0 && imageCount > params.support.capabilities.maxImageCount) {
+        imageCount = params.support.capabilities.maxImageCount;
+    }
 
-    params.imageCount = params.support.capabilities.minImageCount + 1;
+    params.imageCount = imageCount;
     return params;
 };
