@@ -91,7 +91,6 @@ private:
         glfwInit();
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
         window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
     }
@@ -288,7 +287,16 @@ private:
 
     void createSwapChain()
     {
-        VulkanUtilities::SwapchainParameters swapchainParams = VulkanUtilities::generateSwapchainParameters(physicalDevice, surface, WIDTH, HEIGHT);
+        int width;
+        int height;
+
+        glfwGetFramebufferSize(window, &width, &height);
+
+        VulkanUtilities::SwapchainParameters swapchainParams = VulkanUtilities::generateSwapchainParameters(
+            physicalDevice,
+            surface,
+            width,
+            height);
 
         VkSwapchainCreateInfoKHR createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
