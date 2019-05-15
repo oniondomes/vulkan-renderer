@@ -85,6 +85,7 @@ private:
     std::vector<VkFence> inFlightFences;
 
     size_t currentFrame = 0;
+    bool framebufferResized = false;
 
     void initWindow()
     {
@@ -93,6 +94,8 @@ private:
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
         window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+        glfwSetWindowUserPointer(window, this);
+        glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
     }
 
     void initVulkan()
@@ -629,11 +632,27 @@ private:
     {
         // Wait for previous frame to finish
         vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
-        vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
         // Aquire image from the swap chain
         uint32_t imageIndex;
-        vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+        VkResult result = vkAcquireNextImageKHR(
+            device,
+            swapChain,
+            std::numeric_limits<uint64_t>::max(),
+            imageAvailableSemaphores[currentFrame],
+            VK_NULL_HANDLE,
+            &imageIndex);
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            recreateSwapchain();
+            return;
+        }
+        else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+        {
+            throw std::runtime_error("Unable to accquire swapchain image.");
+        }
 
         // Submit command buffer
         VkSubmitInfo submitInfo = {};
@@ -657,6 +676,8 @@ private:
         // Submit the command buffer to the graphics queue
         // When command buffer finishes executing the fence will
         // be signaled
+        vkResetFences(device, 1, &inFlightFences[currentFrame]);
+
         if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS)
         {
             throw std::runtime_error("Failed to submit draw command buffer!");
@@ -677,9 +698,20 @@ private:
         presentInfo.pResults = nullptr;
 
         // Submit the request to present an image to the swap chain
-        vkQueuePresentKHR(presentQueue, &presentInfo);
-        vkQueueWaitIdle(presentQueue);
+        result = vkQueuePresentKHR(presentQueue, &presentInfo);
 
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized)
+        {
+            framebufferResized = false;
+            recreateSwapchain();
+        }
+        else if (result != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to present swapchain image");
+        }
+
+
+        // vkQueueWaitIdle(presentQueue);
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
@@ -742,6 +774,12 @@ private:
         createGraphicsPipeline();
         createFramebuffers();
         createCommandBuffers();
+    }
+
+    static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
+    {
+        auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
+        app->framebufferResized = true;
     }
 };
 
