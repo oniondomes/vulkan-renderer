@@ -763,6 +763,18 @@ private:
 
     void recreateSwapchain()
     {
+        int width = 0;
+        int height = 0;
+
+        // block the thread until window becomes non-zero sized
+        // TODO: For some reason this part does not help
+        while (width == 0 || height == 0)
+        {
+            glfwGetFramebufferSize(window, &width, &height);
+            // puts thread to sleep until an event gets recieved
+            glfwWaitEvents();
+        }
+
         // Wait until resources are free
         vkDeviceWaitIdle(device);
 
