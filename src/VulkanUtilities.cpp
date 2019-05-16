@@ -309,3 +309,23 @@ VulkanUtilities::SwapchainParameters VulkanUtilities::generateSwapchainParameter
     params.imageCount = imageCount;
     return params;
 };
+
+int VulkanUtilities::createVertexBuffer(VkDevice &device, VkBuffer &vertexBuffer)
+{
+    vkBufferCreateInfo bufferInfo = {};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    // Size of the buffer in bytes.
+    bufferInfo.size = sizeof(vertices[0]) * vertices.size();
+    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    // As the buffer will be only used by a graphics
+    // queue I can set an exclusive sharing mode
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateBuffer(device, &bufferInfo, nullptr, vertexBuffer) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Unable to create vertex buffer.");
+        return 1;
+    }
+
+    return 0;
+}

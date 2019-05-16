@@ -80,4 +80,6 @@ public:
     static VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities, const int width, const int height);
 
     static std::vector<char> readFile(const std::string &filename);
+
+    static int createVertexBuffer(VkDevice &device, VkBuffer &vertexBuffer);
 };

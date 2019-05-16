@@ -11,6 +11,7 @@ const std::vector<const char *> validationLayers = {
 const std::vector<const char *> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
+// TODO: Figure this debug stuff out
 #ifdef NDEBUG
 const bool enableValidationLayers = true;
 #else
@@ -91,6 +92,7 @@ private:
 
     size_t currentFrame = 0;
     bool framebufferResized = false;
+    VkBuffer vertexBuffer;
 
     void initWindow()
     {
@@ -134,6 +136,7 @@ private:
 
         VulkanUtilities::createCommandPool(device, commandPool, activeQueuesIndices);
 
+        VulkanUtilities::createVertexBuffer(device, vertexBuffer);
         createCommandBuffers();
         createSyncObjects();
     }
@@ -152,6 +155,8 @@ private:
     void cleanup()
     {
         cleanupSwapchain();
+
+        vkDestroyBuffer(device, vertexBuffer, nullptr);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
