@@ -21,7 +21,7 @@ const bool enableValidationLayers = true;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 const std::vector<VulkanUtilities::Vertex> vertices = {
-    {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+    {{0.0f, -0.5f}, {1.0f, 1.0f, 0.0f}},
     {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
     {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
 };
@@ -92,7 +92,9 @@ private:
 
     size_t currentFrame = 0;
     bool framebufferResized = false;
+
     VkBuffer vertexBuffer;
+    VkDeviceMemory vertexBufferMemory;
 
     void initWindow()
     {
@@ -136,7 +138,7 @@ private:
 
         VulkanUtilities::createCommandPool(device, commandPool, activeQueuesIndices);
 
-        VulkanUtilities::createVertexBuffer(device, vertexBuffer);
+        VulkanUtilities::createVertexBuffer(vertices, device, vertexBuffer, physicalDevice, vertexBufferMemory);
         createCommandBuffers();
         createSyncObjects();
     }
@@ -157,6 +159,7 @@ private:
         cleanupSwapchain();
 
         vkDestroyBuffer(device, vertexBuffer, nullptr);
+        vkFreeMemory(device, vertexBufferMemory, nullptr);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
@@ -634,6 +637,13 @@ private:
             vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
             vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+
+            VkBuffer vertexBuffers[] = {vertexBuffer};
+            VkDeviceSize offsets[] = {0};
+            vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+
+            vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+
             vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
             vkCmdEndRenderPass(commandBuffers[i]);
 

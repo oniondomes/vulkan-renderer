@@ -27,6 +27,27 @@ bool checkDeviceExtensionsSupport(VkPhysicalDevice device)
     return requiredExtensions.empty();
 }
 
+uint32_t findMemoryType(VkPhysicalDevice &physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties)
+{
+    // This object will have to array fields:
+    // - memoryTypes
+    // - memoryHeaps
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+    // TODO: What the fuck is going on here?
+    // Figure this out later
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+    {
+        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+        {
+            return i;
+        }
+    }
+
+    throw std::runtime_error("Unable to find suitable memory type.");
+}
+
 VkSurfaceFormatKHR VulkanUtilities::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats)
 {
     if (availableFormats.size() == 1 && availableFormats[0].format == VK_FORMAT_UNDEFINED)
@@ -310,22 +331,43 @@ VulkanUtilities::SwapchainParameters VulkanUtilities::generateSwapchainParameter
     return params;
 };
 
-int VulkanUtilities::createVertexBuffer(VkDevice &device, VkBuffer &vertexBuffer)
+int VulkanUtilities::createVertexBuffer(
+    std::vector<VulkanUtilities::Vertex> vertices,
+    VkDevice &device,
+    VkBuffer &vertexBuffer,
+    VkPhysicalDevice &physicalDevice,
+    VkDeviceMemory &vertexBufferMemory)
 {
-    vkBufferCreateInfo bufferInfo = {};
+    VkBufferCreateInfo bufferInfo = {};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    // Size of the buffer in bytes.
     bufferInfo.size = sizeof(vertices[0]) * vertices.size();
     bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-    // As the buffer will be only used by a graphics
-    // queue I can set an exclusive sharing mode
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateBuffer(device, &bufferInfo, nullptr, vertexBuffer) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Unable to create vertex buffer.");
-        return 1;
+    if (vkCreateBuffer(device, &bufferInfo, nullptr, &vertexBuffer) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create vertex buffer!");
     }
 
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(device, vertexBuffer, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = findMemoryType(
+        physicalDevice,
+        memRequirements.memoryTypeBits,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    if (vkAllocateMemory(device, &allocInfo, nullptr, &vertexBufferMemory) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate vertex buffer memory!");
+    }
+
+    vkBindBufferMemory(device, vertexBuffer, vertexBufferMemory, 0);
+
+    void* data;
+    vkMapMemory(device, vertexBufferMemory, 0, bufferInfo.size, 0, &data);
+    memcpy(data, vertices.data(), (size_t) bufferInfo.size);
+    vkUnmapMemory(device, vertexBufferMemory);
     return 0;
-}
+};
