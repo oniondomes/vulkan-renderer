@@ -336,24 +336,46 @@ void VulkanUtilities::createVertexBuffer(
     VkDevice &device,
     VkBuffer &vertexBuffer,
     VkPhysicalDevice &physicalDevice,
-    VkDeviceMemory &vertexBufferMemory)
+    VkDeviceMemory &vertexBufferMemory,
+    VkCommandPool &commandPool,
+    VkQueue &graphicsQueue)
 {
     VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+    VulkanUtilities::createBuffer(
+        device,
+        physicalDevice,
+        bufferSize,
+        // Such buffer can be used as source in a memory transfer operation.
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        stagingBuffer,
+        stagingBufferMemory);
+
+    void* data;
+    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    memcpy(data, vertices.data(), (size_t) bufferSize);
+    vkUnmapMemory(device, stagingBufferMemory);
 
     VulkanUtilities::createBuffer(
         device,
         physicalDevice,
         bufferSize,
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        // Buffer can be used as destination in a memory transfer operation.
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        // Property flag meaning the buffer is located in device local memory
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         vertexBuffer,
         vertexBufferMemory
         );
 
-    void* data;
-    vkMapMemory(device, vertexBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, vertices.data(), (size_t) bufferSize);
-    vkUnmapMemory(device, vertexBufferMemory);
+    VulkanUtilities::copyBuffer(stagingBuffer, vertexBuffer, bufferSize, device, commandPool, graphicsQueue);
+
+    // Destroying staging buffer object.
+    vkDestroyBuffer(device, stagingBuffer, nullptr);
+    vkFreeMemory(device, stagingBufferMemory, nullptr);
 };
 
 void VulkanUtilities::createBuffer(
@@ -380,14 +402,60 @@ void VulkanUtilities::createBuffer(
     // Getting memory requirement for a created buffer
     vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
 
-    VkMemoryAllocateInfo allocInfo = {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, propertyFlags);
+    VkMemoryAllocateInfo allocationInfo = {};
+    allocationInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocationInfo.allocationSize = memRequirements.size;
+    allocationInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, propertyFlags);
 
-     if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
+     if (vkAllocateMemory(device, &allocationInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
         throw std::runtime_error("Unable to allocate buffer memory");
     }
 
     vkBindBufferMemory(device, buffer, bufferMemory, 0);
+}
+
+void VulkanUtilities::copyBuffer(
+    VkBuffer srcBuffer,
+    VkBuffer destBuffer,
+    VkDeviceSize size,
+    VkDevice &device,
+    VkCommandPool &commandPool,
+    VkQueue &graphicsQueue)
+{
+    // Allocation params for command buffer object.
+    VkCommandBufferAllocateInfo allocationInfo = {};
+    allocationInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocationInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocationInfo.commandPool = commandPool;
+    allocationInfo.commandBufferCount = 1;
+
+    VkCommandBuffer commandBuffer;
+    vkAllocateCommandBuffers(device, &allocationInfo, &commandBuffer);
+
+    VkCommandBufferBeginInfo beginInfo = {};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+    VkBufferCopy copyRegion = {};
+    copyRegion.srcOffset = 0;
+    copyRegion.dstOffset = 0;
+    copyRegion.size = size;
+
+    // Record copy command to commandBuffer
+    vkCmdCopyBuffer(commandBuffer, srcBuffer, destBuffer, 1, &copyRegion);
+    vkEndCommandBuffer(commandBuffer);
+
+    // Now commandBuffer with a copy command needs to be submitted
+    // to a queue
+    VkSubmitInfo submitInfo = {};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+
+    vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(graphicsQueue);
+
+    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }

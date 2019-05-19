@@ -138,7 +138,14 @@ private:
 
         VulkanUtilities::createCommandPool(device, commandPool, activeQueuesIndices);
 
-        VulkanUtilities::createVertexBuffer(vertices, device, vertexBuffer, physicalDevice, vertexBufferMemory);
+        VulkanUtilities::createVertexBuffer(vertices,
+            device,
+            vertexBuffer,
+            physicalDevice,
+            vertexBufferMemory,
+            commandPool,
+            graphicsQueue);
+
         createCommandBuffers();
         createSyncObjects();
     }

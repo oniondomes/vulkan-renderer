@@ -95,5 +95,15 @@ public:
         VkDevice &device,
         VkBuffer &vertexBuffer,
         VkPhysicalDevice &physicalDevice,
-        VkDeviceMemory &vertexBufferMemory);
+        VkDeviceMemory &vertexBufferMemory,
+        VkCommandPool &commandPool,
+        VkQueue &graphicsQueue);
+
+    static void copyBuffer(
+        VkBuffer srcBuffer,
+        VkBuffer destBuffer,
+        VkDeviceSize size,
+        VkDevice &device,
+        VkCommandPool &commandPool,
+        VkQueue &graphicsQueue);
 };
