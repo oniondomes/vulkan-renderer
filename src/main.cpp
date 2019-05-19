@@ -21,10 +21,15 @@ const bool enableValidationLayers = true;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 const std::vector<VulkanUtilities::Vertex> vertices = {
-    {{0.0f, -0.5f}, {1.0f, 1.0f, 0.0f}},
-    {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
 };
+
+// uint16_t max capacity is 65535 vertices max
+const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
+
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger)
 {
@@ -96,6 +101,9 @@ private:
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
 
+    VkBuffer indexBuffer;
+    VkDeviceMemory indexBufferMemory;
+
     void initWindow()
     {
         glfwInit();
@@ -138,11 +146,21 @@ private:
 
         VulkanUtilities::createCommandPool(device, commandPool, activeQueuesIndices);
 
-        VulkanUtilities::createVertexBuffer(vertices,
+        VulkanUtilities::createVertexBuffer(
+            vertices,
             device,
             vertexBuffer,
             physicalDevice,
             vertexBufferMemory,
+            commandPool,
+            graphicsQueue);
+
+        VulkanUtilities::createIndexBuffer(
+            indices,
+            device,
+            indexBuffer,
+            physicalDevice,
+            indexBufferMemory,
             commandPool,
             graphicsQueue);
 
@@ -164,6 +182,9 @@ private:
     void cleanup()
     {
         cleanupSwapchain();
+
+        vkDestroyBuffer(device, indexBuffer, nullptr);
+        vkFreeMemory(device, indexBufferMemory, nullptr);
 
         vkDestroyBuffer(device, vertexBuffer, nullptr);
         vkFreeMemory(device, vertexBufferMemory, nullptr);
@@ -648,10 +669,11 @@ private:
             VkBuffer vertexBuffers[] = {vertexBuffer};
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+            // Bind index buffer to a command buffer
+            vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
-            vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+            vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
-            vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
             vkCmdEndRenderPass(commandBuffers[i]);
 
             if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS)

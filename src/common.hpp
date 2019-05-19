@@ -11,7 +11,7 @@
 #include <set>
 #include "optional.hpp"
 
-const int WIDTH = 640;
+const int WIDTH = 480;
 const int HEIGHT = 480;
 
 struct QueueFamilyIndices

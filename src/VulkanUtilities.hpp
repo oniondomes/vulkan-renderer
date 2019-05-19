@@ -99,6 +99,15 @@ public:
         VkCommandPool &commandPool,
         VkQueue &graphicsQueue);
 
+    static void createIndexBuffer(
+        std::vector<uint16_t> indices,
+        VkDevice &device,
+        VkBuffer &indexBuffer,
+        VkPhysicalDevice &physicalDevice,
+        VkDeviceMemory &indexBufferMemory,
+        VkCommandPool &commandPool,
+        VkQueue &graphicsQueue);
+
     static void copyBuffer(
         VkBuffer srcBuffer,
         VkBuffer destBuffer,
