@@ -657,6 +657,7 @@ private:
     void drawFrame()
     {
         // Wait for previous frame to finish
+        // Window minimization breaks here
         vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
 
         // Aquire image from the swap chain

@@ -81,7 +81,16 @@ public:
 
     static std::vector<char> readFile(const std::string &filename);
 
-    static int createVertexBuffer(
+    static void createBuffer(
+        VkDevice &device,
+        VkPhysicalDevice &physicalDevice,
+        VkDeviceSize size,
+        VkBufferUsageFlags flags,
+        VkMemoryPropertyFlags propertyFlags,
+        VkBuffer &buffer,
+        VkDeviceMemory &bufferMemory);
+
+    static void createVertexBuffer(
         std::vector<VulkanUtilities::Vertex> vertices,
         VkDevice &device,
         VkBuffer &vertexBuffer,
