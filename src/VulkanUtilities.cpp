@@ -503,3 +503,28 @@ void VulkanUtilities::createIndexBuffer(
     vkDestroyBuffer(device, stagingBuffer, nullptr);
     vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
+
+void VulkanUtilities::createUniformBuffers(
+    std::vector<VkBuffer> &uniformBuffers,
+    std::vector<VkDeviceMemory> &uniformBuffersMemory,
+    std::vector<VkImage> &swapchainImages,
+    VkDevice &device,
+    VkPhysicalDevice &physicalDevice)
+{
+    VkDeviceSize bufferSize = sizeof(VulkanUtilities::UniformBufferObject);
+
+    uniformBuffers.resize(swapchainImages.size());
+    uniformBuffersMemory.resize(swapchainImages.size());
+
+    for (size_t i = 0; i < swapchainImages.size(); i++)
+    {
+        VulkanUtilities::createBuffer(
+            device,
+            physicalDevice,
+            bufferSize,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            uniformBuffers[i],
+            uniformBuffersMemory[i]);
+    }
+}

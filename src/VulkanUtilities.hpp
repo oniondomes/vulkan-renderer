@@ -23,7 +23,7 @@ public:
 
     struct Vertex
     {
-        glm::vec2 pos;
+        glm::vec3 pos;
         glm::vec3 color;
 
         static VkVertexInputBindingDescription getBindingDescription()
@@ -55,6 +55,12 @@ public:
 
             return attributeDescriptions;
         }
+    };
+
+    struct UniformBufferObject {
+        glm::mat4 model;
+        glm::mat4 view;
+        glm::mat4 proj;
     };
 
     static bool enableValidationLayers;
@@ -115,4 +121,11 @@ public:
         VkDevice &device,
         VkCommandPool &commandPool,
         VkQueue &graphicsQueue);
+
+    static void createUniformBuffers(
+        std::vector<VkBuffer> &uniformBuffers,
+        std::vector<VkDeviceMemory> &uniformBuffersMemory,
+        std::vector<VkImage> &swapchainImages,
+        VkDevice &device,
+        VkPhysicalDevice &physicalDevice);
 };
