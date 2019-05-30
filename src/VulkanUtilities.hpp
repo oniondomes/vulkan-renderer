@@ -57,7 +57,8 @@ public:
         }
     };
 
-    struct UniformBufferObject {
+    struct UniformBufferObject
+    {
         glm::mat4 model;
         glm::mat4 view;
         glm::mat4 proj;
@@ -128,4 +129,52 @@ public:
         std::vector<VkImage> &swapchainImages,
         VkDevice &device,
         VkPhysicalDevice &physicalDevice);
+
+    static void createTextureImage(
+        VkBuffer &stagingBuffer,
+        VkDeviceMemory &stagingBufferMemory,
+        VkImage &textureImage,
+        VkDeviceMemory &textureImageMemory,
+        VkQueue &graphicsQueue,
+        VkCommandPool &commandPool,
+        VkDevice &device,
+        VkPhysicalDevice &physicalDevice);
+
+    static void createImage(
+        uint32_t width,
+        uint32_t height,
+        VkFormat format,
+        VkImageTiling tiling,
+        VkImageUsageFlags usage,
+        VkMemoryPropertyFlags properties,
+        VkImage& image,
+        VkDeviceMemory& imageMemory,
+        VkDevice &device,
+        VkPhysicalDevice &physicalDevice);
+
+    static VkCommandBuffer beginSingleTimeCommands(VkCommandPool &commandPool, VkDevice &device);
+
+    static void endSingleTimeCommands(
+        VkCommandBuffer commandBuffer,
+        VkQueue &graphicsQueue,
+        VkCommandPool &commandPool,
+        VkDevice &device);
+
+    static void copyBufferToImage(
+        VkBuffer buffer,
+        VkImage image,
+        uint32_t width,
+        uint32_t height,
+        VkQueue &graphicsQueue,
+        VkCommandPool &commandPool,
+        VkDevice &device);
+
+    static void transitionImageLayout(
+        VkImage image,
+        VkFormat format,
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout,
+        VkQueue &graphicsQueue,
+        VkCommandPool &commandPool,
+        VkDevice &device);
 };

@@ -1,4 +1,7 @@
 .vscode
+.DS_Store
+.idea
+cmake-build-debug
 
 CMakeLists.txt.user
 CMakeCache.txt

@@ -109,6 +109,12 @@ private:
     VkDescriptorPool descriptorPool;
     std::vector<VkDescriptorSet> descriptorSets;
 
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+
+    VkImage textureImage;
+    VkDeviceMemory textureImageMemory;
+
     void initWindow()
     {
         glfwInit();
@@ -151,6 +157,16 @@ private:
         createFramebuffers();
 
         VulkanUtilities::createCommandPool(device, commandPool, activeQueuesIndices);
+
+        VulkanUtilities::createTextureImage(
+            stagingBuffer,
+            stagingBufferMemory,
+            textureImage,
+            textureImageMemory,
+            graphicsQueue,
+            commandPool,
+            device,
+            physicalDevice);
 
         VulkanUtilities::createVertexBuffer(
             vertices,
@@ -198,6 +214,9 @@ private:
     void cleanup()
     {
         cleanupSwapchain();
+
+        vkDestroyImage(device, textureImage, nullptr);
+        vkFreeMemory(device, textureImageMemory, nullptr);
 
         vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
@@ -484,8 +503,8 @@ private:
 
     void createGraphicsPipeline()
     {
-        auto vertShaderCode = VulkanUtilities::readFile("shaders/vert.spv");
-        auto fragShaderCode = VulkanUtilities::readFile("shaders/frag.spv");
+        auto vertShaderCode = VulkanUtilities::readFile("../shaders/vert.spv");
+        auto fragShaderCode = VulkanUtilities::readFile("../shaders/frag.spv");
 
         VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
         VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);

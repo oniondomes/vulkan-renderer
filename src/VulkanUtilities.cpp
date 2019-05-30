@@ -1,6 +1,9 @@
 #include <fstream>
 #include "VulkanUtilities.hpp"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 const std::vector<const char *> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
@@ -46,6 +49,57 @@ uint32_t findMemoryType(VkPhysicalDevice &physicalDevice, uint32_t typeFilter, V
     }
 
     throw std::runtime_error("Unable to find suitable memory type.");
+}
+
+VkCommandBuffer VulkanUtilities::beginSingleTimeCommands(VkCommandPool &commandPool, VkDevice &device)
+{
+    // Allocation params for command buffer object.
+    VkCommandBufferAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandPool = commandPool;
+    allocInfo.commandBufferCount = 1;
+
+    VkCommandBuffer commandBuffer;
+    // Write passed commands from command pool into commandBuffer
+    // Actually, I just allocate memory for this
+    vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+
+    VkCommandBufferBeginInfo beginInfo = {};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    // Start recording command buffer
+    // beginInfo contains command poll
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+    // So now I can return a buffer that contains commands
+    // from the command pool
+    // Do all of this mean that a copied the to command to buffer?
+    return commandBuffer;
+}
+
+void VulkanUtilities::endSingleTimeCommands(
+    VkCommandBuffer commandBuffer,
+    VkQueue &graphicsQueue,
+    VkCommandPool &commandPool,
+    VkDevice &device)
+{
+    // End recording command buffer
+    vkEndCommandBuffer(commandBuffer);
+
+    // Prepare info to submit the buffer to the queue
+    VkSubmitInfo submitInfo = {};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+
+    vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    // Wait for a queue to finish executing its commands
+    vkQueueWaitIdle(graphicsQueue);
+
+    // Free command buffer memory
+    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
 VkSurfaceFormatKHR VulkanUtilities::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats)
@@ -414,52 +468,6 @@ void VulkanUtilities::createBuffer(
     vkBindBufferMemory(device, buffer, bufferMemory, 0);
 }
 
-void VulkanUtilities::copyBuffer(
-    VkBuffer srcBuffer,
-    VkBuffer destBuffer,
-    VkDeviceSize size,
-    VkDevice &device,
-    VkCommandPool &commandPool,
-    VkQueue &graphicsQueue)
-{
-    // Allocation params for command buffer object.
-    VkCommandBufferAllocateInfo allocationInfo = {};
-    allocationInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocationInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocationInfo.commandPool = commandPool;
-    allocationInfo.commandBufferCount = 1;
-
-    VkCommandBuffer commandBuffer;
-    vkAllocateCommandBuffers(device, &allocationInfo, &commandBuffer);
-
-    VkCommandBufferBeginInfo beginInfo = {};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-    vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
-    VkBufferCopy copyRegion = {};
-    copyRegion.srcOffset = 0;
-    copyRegion.dstOffset = 0;
-    copyRegion.size = size;
-
-    // Record copy command to commandBuffer
-    vkCmdCopyBuffer(commandBuffer, srcBuffer, destBuffer, 1, &copyRegion);
-    vkEndCommandBuffer(commandBuffer);
-
-    // Now commandBuffer with a copy command needs to be submitted
-    // to a queue
-    VkSubmitInfo submitInfo = {};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffer;
-
-    vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(graphicsQueue);
-
-    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-}
-
 void VulkanUtilities::createIndexBuffer(
     std::vector<uint16_t> indices,
     VkDevice &device,
@@ -527,4 +535,304 @@ void VulkanUtilities::createUniformBuffers(
             uniformBuffers[i],
             uniformBuffersMemory[i]);
     }
+}
+
+void VulkanUtilities::transitionImageLayout(
+    VkImage image,
+    VkFormat format,
+    VkImageLayout oldLayout,
+    VkImageLayout newLayout,
+    VkQueue &graphicsQueue,
+    VkCommandPool &commandPool,
+    VkDevice &device)
+{
+    // Create a command buffer from a command pool
+    VkCommandBuffer commandBuffer = VulkanUtilities::beginSingleTimeCommands(
+        commandPool,
+        device);
+
+    // ImageMemoryBarrier will ensure that writing to a buffer will be
+    // completed before anyone would read from it
+    VkImageMemoryBarrier barrier = {};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = oldLayout;
+    barrier.newLayout = newLayout;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = image;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+
+    // Source stage specifies the pipeline stage that should
+    // happen before the barrier
+    VkPipelineStageFlags sourceStage;
+
+    // Destination stage defines the pipeline stage in which
+    // operations will wait on the barrier
+    VkPipelineStageFlags destinationStage;
+
+    // Here we need to handle to types of transition
+    // - undefined -> transfer
+    // - transfer -> shader reading (here shader reading needs to wait for transfer to finish)
+
+    if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+    {
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    }
+    else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+    {
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
+    else
+    {
+        throw std::invalid_argument("unsupported layout transition!");
+    }
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        sourceStage, destinationStage,
+        0,
+        0, nullptr,
+        0, nullptr,
+        1, &barrier);
+
+    VulkanUtilities::endSingleTimeCommands(
+        commandBuffer,
+        graphicsQueue,
+        commandPool,
+        device);
+}
+
+void VulkanUtilities::createTextureImage(
+    VkBuffer &stagingBuffer,
+    VkDeviceMemory &stagingBufferMemory,
+    VkImage &textureImage,
+    VkDeviceMemory &textureImageMemory,
+    VkQueue &graphicsQueue,
+    VkCommandPool &commandPool,
+    VkDevice &device,
+    VkPhysicalDevice &physicalDevice)
+{
+    int textureWidth, textureHeight, textureChannel;
+
+    // Get an array of pixels
+    stbi_uc* pixels = stbi_load(
+        "../textures/image.png",
+        &textureWidth,
+        &textureHeight,
+        &textureChannel,
+        STBI_rgb_alpha);
+
+    // Calculate image size
+    VkDeviceSize imageSize = textureWidth * textureWidth * 4;
+
+    if (!pixels) {
+        throw std::runtime_error("failed to load texture image!");
+    }
+
+    // Create buffer of imageSize size
+    // It would be staging buffer
+    // -------
+    // Does the memory object allow to connect
+    // host memory to a buffer?
+    VulkanUtilities::createBuffer(
+        device,
+        physicalDevice,
+        imageSize,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        stagingBuffer,
+        stagingBufferMemory);
+
+    // Data is pointing to a pointer to the beginning
+    // of the stagingBufferMemory
+    void* data;
+    vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
+    memcpy(data, pixels, static_cast<size_t>(imageSize));
+    vkUnmapMemory(device, stagingBufferMemory);
+
+    // Here I just wrote pixels data into stagingBufferMemory
+    // Now I need to clear original pixels
+    stbi_image_free(pixels);
+
+    // At the end I have a buffer with some pixels data
+    // The we'll create an image object
+    // > to do what???
+    // My guess is that later we will connect created image object to
+    // a buffer (or just copy bytes from it).
+    VulkanUtilities::createImage(
+        textureWidth,
+        textureHeight,
+        VK_FORMAT_R8G8B8A8_UNORM,
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        textureImage,
+        textureImageMemory,
+        device,
+        physicalDevice);
+
+    // Now I need to copy stagingBuffer to textureImage
+
+    VulkanUtilities::transitionImageLayout(
+        textureImage,
+        VK_FORMAT_R8G8B8A8_UNORM,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        graphicsQueue,
+        commandPool,
+        device);
+    VulkanUtilities::copyBufferToImage(
+        stagingBuffer,
+        textureImage,
+        static_cast<uint32_t>(textureWidth),
+        static_cast<uint32_t>(textureHeight),
+        graphicsQueue,
+        commandPool,
+        device);
+
+    transitionImageLayout(
+        textureImage,
+        VK_FORMAT_R8G8B8A8_UNORM,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        graphicsQueue,
+        commandPool,
+        device);
+
+    vkDestroyBuffer(device, stagingBuffer, nullptr);
+    vkFreeMemory(device, stagingBufferMemory, nullptr);
+}
+
+void VulkanUtilities::createImage(
+    uint32_t width,
+    uint32_t height,
+    VkFormat format,
+    VkImageTiling tiling,
+    VkImageUsageFlags usage,
+    VkMemoryPropertyFlags properties,
+    VkImage& image,
+    VkDeviceMemory& imageMemory,
+    VkDevice &device,
+    VkPhysicalDevice &physicalDevice)
+{
+    // Set image object info
+    VkImageCreateInfo imageInfo = {};
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.extent.width = width;
+    imageInfo.extent.height = height;
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.format = format;
+    imageInfo.tiling = tiling;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageInfo.usage = usage;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create image!");
+    }
+
+    // Acquire memory requirements considering images size
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(device, image, &memRequirements);
+
+    // Fill in info for memory allocation
+    VkMemoryAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
+
+    // Allocate memory and binding image object to device memory
+    if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate image memory!");
+    }
+
+    vkBindImageMemory(device, image, imageMemory, 0);
+
+
+    // As the result we have an image object with bounded memory with
+    // specific characterics
+}
+
+void VulkanUtilities::copyBuffer(
+    VkBuffer srcBuffer,
+    VkBuffer destBuffer,
+    VkDeviceSize size,
+    VkDevice &device,
+    VkCommandPool &commandPool,
+    VkQueue &graphicsQueue)
+{
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(commandPool, device);
+
+    // Specify which part of the buffer will
+    // be copied to another buffer
+    VkBufferCopy copyRegion = {};
+    copyRegion.size = size;
+    vkCmdCopyBuffer(commandBuffer, srcBuffer, destBuffer, 1, &copyRegion);
+
+    endSingleTimeCommands(commandBuffer, graphicsQueue, commandPool, device);
+}
+
+void VulkanUtilities::copyBufferToImage(
+    VkBuffer buffer,
+    VkImage image,
+    uint32_t width,
+    uint32_t height,
+    VkQueue &graphicsQueue,
+    VkCommandPool &commandPool,
+    VkDevice &device)
+{
+    // Put commands in command pool to command buffer
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(commandPool, device);
+
+    // Specify which part of the buffer to which
+    // part of the image object will be written
+    VkBufferImageCopy region = {};
+
+    region.bufferOffset = 0;
+
+    // Specify how the pixels are layed out in the memory
+    region.bufferRowLength = 0;
+    region.bufferImageHeight = 0;
+
+    // To which part of the image I want to write buffer data
+    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.imageSubresource.mipLevel = 0;
+    region.imageSubresource.baseArrayLayer = 0;
+    region.imageSubresource.layerCount = 1;
+
+    region.imageOffset = {0, 0, 0};
+    region.imageExtent = {
+        width,
+        height,
+        1
+    };
+
+    // Enqueue buffer to image copy operation
+    vkCmdCopyBufferToImage(
+        commandBuffer,
+        buffer,
+        image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        1,
+        &region);
+
+    // Submit buffer into the queue
+    endSingleTimeCommands(commandBuffer, graphicsQueue, commandPool, device);
 }

@@ -12,6 +12,7 @@ find_package(glm REQUIRED)
 
 if (VULKAN_FOUND)
     include_directories(${Vulkan_INCLUDE_DIRS})
+    include_directories ($ENV{STB_INCLUDE_PATH})
 
     target_link_libraries (
         ${PROJECT_NAME}
