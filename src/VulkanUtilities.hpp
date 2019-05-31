@@ -177,4 +177,16 @@ public:
         VkQueue &graphicsQueue,
         VkCommandPool &commandPool,
         VkDevice &device);
+
+    static VkImageView createImageView(
+        VkImage &image,
+        VkFormat const &format,
+        VkDevice &device);
+
+    static void createTextureImageView(
+        VkImageView &textureImageView,
+        VkImage &textureImage,
+        VkDevice &device);
+
+    static void createTextureSampler(VkSampler &textureSampler, VkDevice &device);
 };

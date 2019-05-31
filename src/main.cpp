@@ -114,6 +114,8 @@ private:
 
     VkImage textureImage;
     VkDeviceMemory textureImageMemory;
+    VkImageView textureImageView;
+    VkSampler textureSampler;
 
     void initWindow()
     {
@@ -139,6 +141,7 @@ private:
             activeQueuesIndices.graphicsFamily.value(),
             activeQueuesIndices.presentFamily.value()};
         VkPhysicalDeviceFeatures deviceFeatures = {};
+        deviceFeatures.samplerAnisotropy = VK_TRUE;
 
         VulkanUtilities::createLogicalDevice(
             physicalDevice,
@@ -167,6 +170,9 @@ private:
             commandPool,
             device,
             physicalDevice);
+
+        VulkanUtilities::createTextureImageView(textureImageView, textureImage, device);
+        VulkanUtilities::createTextureSampler(textureSampler, device);
 
         VulkanUtilities::createVertexBuffer(
             vertices,
@@ -215,6 +221,8 @@ private:
     {
         cleanupSwapchain();
 
+        vkDestroySampler(device, textureSampler, nullptr);
+        vkDestroyImageView(device, textureImageView, nullptr);
         vkDestroyImage(device, textureImage, nullptr);
         vkFreeMemory(device, textureImageMemory, nullptr);
 
@@ -431,28 +439,10 @@ private:
 
         for (size_t i = 0; i < swapChainImages.size(); i++)
         {
-            VkImageViewCreateInfo createInfo = {};
-            createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            createInfo.image = swapChainImages[i];
-
-            createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            createInfo.format = swapChainImageFormat;
-
-            createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-            createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-            createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-            createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-            createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            createInfo.subresourceRange.baseMipLevel = 0;
-            createInfo.subresourceRange.levelCount = 1;
-            createInfo.subresourceRange.baseArrayLayer = 0;
-            createInfo.subresourceRange.layerCount = 1;
-
-            if (vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS)
-            {
-                throw std::runtime_error("Failed to create image views!");
-            }
+            swapChainImageViews[i] = VulkanUtilities::createImageView(
+                swapChainImages[i],
+                swapChainImageFormat,
+                device);
         }
     }
 
@@ -503,8 +493,8 @@ private:
 
     void createGraphicsPipeline()
     {
-        auto vertShaderCode = VulkanUtilities::readFile("../shaders/vert.spv");
-        auto fragShaderCode = VulkanUtilities::readFile("../shaders/frag.spv");
+        auto vertShaderCode = VulkanUtilities::readFile("shaders/vert.spv");
+        auto fragShaderCode = VulkanUtilities::readFile("shaders/frag.spv");
 
         VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
         VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
