@@ -187,6 +187,7 @@ public:
     static VkImageView createImageView(
         VkImage &image,
         VkFormat const &format,
+        VkImageAspectFlags aspectFlags,
         VkDevice &device);
 
     static void createTextureImageView(
@@ -195,4 +196,22 @@ public:
         VkDevice &device);
 
     static void createTextureSampler(VkSampler &textureSampler, VkDevice &device);
+
+    static void createDepthResources(
+        VkImage &depthImage,
+        VkDeviceMemory &depthImageMemory,
+        VkImageView &depthImageView,
+        VkExtent2D &swapChainExtent,
+        VkQueue &graphicsQueue,
+        VkCommandPool &commandPool,
+        VkDevice &device,
+        VkPhysicalDevice &physicalDevice);
+
+    static VkFormat findSupportedFormat(
+        const std::vector<VkFormat> &candidates,
+        VkImageTiling tiling,
+        VkFormatFeatureFlags features,
+        VkPhysicalDevice &physicalDevice);
+
+    static VkFormat findDepthFormat(VkPhysicalDevice &physicalDevice);
 };
