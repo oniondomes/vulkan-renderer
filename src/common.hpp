@@ -16,7 +16,7 @@
 #include <iostream>
 #include <string>
 #include <set>
-#include "optional.hpp"
+#include <optional.hpp>
 
 const int WIDTH = 480;
 const int HEIGHT = 480;
