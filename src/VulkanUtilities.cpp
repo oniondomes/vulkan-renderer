@@ -473,7 +473,7 @@ void VulkanUtilities::createBuffer(
 }
 
 void VulkanUtilities::createIndexBuffer(
-    std::vector<uint16_t> indices,
+    std::vector<uint32_t> indices,
     VkDevice &device,
     VkBuffer &indexBuffer,
     VkPhysicalDevice &physicalDevice,
@@ -650,7 +650,7 @@ void VulkanUtilities::createTextureImage(
 
     // Get an array of pixels
     stbi_uc* pixels = stbi_load(
-        "textures/image.png",
+        "./textures/cube.png",
         &textureWidth,
         &textureHeight,
         &textureChannel,

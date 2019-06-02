@@ -61,6 +61,10 @@ public:
 
             return attributeDescriptions;
         }
+
+        bool operator==(const Vertex& other) const {
+            return pos == other.pos && color == other.color && texCoord == other.texCoord;
+        }
     };
 
     struct UniformBufferObject
@@ -113,7 +117,7 @@ public:
         VkQueue &graphicsQueue);
 
     static void createIndexBuffer(
-        std::vector<uint16_t> indices,
+        std::vector<uint32_t> indices,
         VkDevice &device,
         VkBuffer &indexBuffer,
         VkPhysicalDevice &physicalDevice,
