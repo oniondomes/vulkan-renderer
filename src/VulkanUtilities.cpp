@@ -650,7 +650,7 @@ void VulkanUtilities::createTextureImage(
 
     // Get an array of pixels
     stbi_uc* pixels = stbi_load(
-        "./textures/cube.png",
+        TEXTURE_PATH.c_str(),
         &textureWidth,
         &textureHeight,
         &textureChannel,

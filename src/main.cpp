@@ -18,9 +18,6 @@ const bool enableValidationLayers = false;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-const std::string MODEL_PATH = "models/cube.obj";
-const std::string TEXTURE_PATH = "textures/cube.png";
-
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger)
 {
     auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
@@ -524,8 +521,8 @@ private:
 
     void createGraphicsPipeline()
     {
-        auto vertShaderCode = VulkanUtilities::readFile("shaders/vert.spv");
-        auto fragShaderCode = VulkanUtilities::readFile("shaders/frag.spv");
+        auto vertShaderCode = VulkanUtilities::readFile(VERT_SHADER_PATH);
+        auto fragShaderCode = VulkanUtilities::readFile(FRAG_SHADER_PATH);
 
         VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
         VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);

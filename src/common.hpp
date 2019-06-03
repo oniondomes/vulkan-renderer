@@ -21,6 +21,11 @@
 const int WIDTH = 480;
 const int HEIGHT = 480;
 
+const std::string MODEL_PATH = "./resources/models/cube.obj";
+const std::string TEXTURE_PATH = "./resources/textures/cube.png";
+const std::string VERT_SHADER_PATH = "./resources/shaders/vert.spv";
+const std::string FRAG_SHADER_PATH = "./resources/shaders/frag.spv";
+
 struct QueueFamilyIndices
 {
     std::experimental::optional<uint32_t> presentFamily;
