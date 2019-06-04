@@ -218,4 +218,6 @@ public:
         VkPhysicalDevice &physicalDevice);
 
     static VkFormat findDepthFormat(VkPhysicalDevice &physicalDevice);
+
+    static bool checkValidationLayerSupport(std::vector<const char*> validationLayers);
 };
