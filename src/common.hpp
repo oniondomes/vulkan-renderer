@@ -1,4 +1,5 @@
-#pragma once
+#ifndef common_h
+#define common_h
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -21,6 +22,8 @@
 const int WIDTH = 480;
 const int HEIGHT = 480;
 
+const int MAX_FRAMES_IN_FLIGHT = 2;
+
 const std::string MODEL_PATH = "./resources/models/cube.obj";
 const std::string TEXTURE_PATH = "./resources/textures/cube.png";
 const std::string VERT_SHADER_PATH = "./resources/shaders/vert.spv";
@@ -36,3 +39,4 @@ struct QueueFamilyIndices
         return graphicsFamily.has_value() && presentFamily.has_value();
     }
 };
+#endif
