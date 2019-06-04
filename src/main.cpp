@@ -9,11 +9,10 @@ const std::vector<const char *> validationLayers = {
 const std::vector<const char *> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
-// TODO: Figure this debug stuff out
 #ifdef NDEBUG
-const bool enableValidationLayers = true;
-#else
 const bool enableValidationLayers = false;
+#else
+const bool enableValidationLayers = true;
 #endif
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
@@ -327,6 +326,7 @@ private:
         const char **glfwExtensions;
         glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
+        // using vector's range constuctor
         std::vector<const char *> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
         if (enableValidationLayers)
