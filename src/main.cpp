@@ -1,9 +1,9 @@
 #include "VulkanUtilities.hpp"
 
 #ifdef NDEBUG
-const bool enableValidationLayers = false;
+bool enableValidationLayers = false;
 #else
-const bool enableValidationLayers = true;
+bool enableValidationLayers = true;
 #endif
 
 const std::vector<const char*> validationLayers = {
@@ -63,8 +63,13 @@ public:
         // Create Vulkan instance
         if (enableValidationLayers && !VulkanUtilities::checkValidationLayerSupport(validationLayers))
         {
-            throw std::runtime_error("validation layers requested, but not available!");
+            std::cerr << "validation layers requested, but not available!" << std::endl;
+            enableValidationLayers = false;
+        } else {
+            std::cerr << "Validation layers enabled" << std::endl;
         }
+
+        VulkanUtilities::createInstance(instance, enableValidationLayers);
     }
 
     void createSwapchain()

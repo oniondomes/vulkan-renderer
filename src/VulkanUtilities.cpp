@@ -11,6 +11,7 @@ const std::vector<const char *> validationLayers = {
     "VK_LAYER_KHRONOS_validation"};
 
 bool VulkanUtilities::enableValidationLayers = true;
+VkDebugReportCallbackEXT VulkanUtilities::debugMessenger;
 
 bool checkDeviceExtensionsSupport(VkPhysicalDevice device)
 {
@@ -51,7 +52,8 @@ uint32_t findMemoryType(VkPhysicalDevice &physicalDevice, uint32_t typeFilter, V
     throw std::runtime_error("Unable to find suitable memory type.");
 }
 
-bool hasStencilComponent(VkFormat format) {
+bool hasStencilComponent(VkFormat format)
+{
     return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
@@ -153,8 +155,7 @@ VkExtent2D VulkanUtilities::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &cap
     {
         VkExtent2D actualExtent = {
             static_cast<uint32_t>(width),
-            static_cast<uint32_t>(height)
-        };
+            static_cast<uint32_t>(height)};
 
         actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
         actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
@@ -381,7 +382,8 @@ VulkanUtilities::SwapchainParameters VulkanUtilities::generateSwapchainParameter
     params.mode = VulkanUtilities::chooseSwapPresentMode(params.support.presentModes);
 
     uint32_t imageCount = params.support.capabilities.minImageCount + 1;
-    if (params.support.capabilities.maxImageCount > 0 && imageCount > params.support.capabilities.maxImageCount) {
+    if (params.support.capabilities.maxImageCount > 0 && imageCount > params.support.capabilities.maxImageCount)
+    {
         imageCount = params.support.capabilities.maxImageCount;
     }
 
@@ -412,9 +414,9 @@ void VulkanUtilities::createVertexBuffer(
         stagingBuffer,
         stagingBufferMemory);
 
-    void* data;
+    void *data;
     vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, vertices.data(), (size_t) bufferSize);
+    memcpy(data, vertices.data(), (size_t)bufferSize);
     vkUnmapMemory(device, stagingBufferMemory);
 
     VulkanUtilities::createBuffer(
@@ -426,8 +428,7 @@ void VulkanUtilities::createVertexBuffer(
         // Property flag meaning the buffer is located in device local memory
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         vertexBuffer,
-        vertexBufferMemory
-        );
+        vertexBufferMemory);
 
     VulkanUtilities::copyBuffer(stagingBuffer, vertexBuffer, bufferSize, device, commandPool, graphicsQueue);
 
@@ -451,7 +452,8 @@ void VulkanUtilities::createBuffer(
     bufferInfo.usage = usageFlags;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+    if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
+    {
         throw std::runtime_error("Unable to create a buffer");
     }
 
@@ -465,7 +467,8 @@ void VulkanUtilities::createBuffer(
     allocationInfo.allocationSize = memRequirements.size;
     allocationInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, propertyFlags);
 
-     if (vkAllocateMemory(device, &allocationInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
+    if (vkAllocateMemory(device, &allocationInfo, nullptr, &bufferMemory) != VK_SUCCESS)
+    {
         throw std::runtime_error("Unable to allocate buffer memory");
     }
 
@@ -484,7 +487,7 @@ void VulkanUtilities::createIndexBuffer(
     VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
     VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory ;
+    VkDeviceMemory stagingBufferMemory;
 
     VulkanUtilities::createBuffer(
         device,
@@ -496,9 +499,9 @@ void VulkanUtilities::createIndexBuffer(
         stagingBuffer,
         stagingBufferMemory);
 
-    void* data;
+    void *data;
     vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, indices.data(), (size_t) bufferSize);
+    memcpy(data, indices.data(), (size_t)bufferSize);
     vkUnmapMemory(device, stagingBufferMemory);
 
     VulkanUtilities::createBuffer(
@@ -565,13 +568,17 @@ void VulkanUtilities::transitionImageLayout(
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.image = image;
 
-    if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+    if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+    {
         barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 
-        if (hasStencilComponent(format)) {
+        if (hasStencilComponent(format))
+        {
             barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
         }
-    } else {
+    }
+    else
+    {
         barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     }
 
@@ -649,7 +656,7 @@ void VulkanUtilities::createTextureImage(
     int textureWidth, textureHeight, textureChannel;
 
     // Get an array of pixels
-    stbi_uc* pixels = stbi_load(
+    stbi_uc *pixels = stbi_load(
         TEXTURE_PATH.c_str(),
         &textureWidth,
         &textureHeight,
@@ -659,7 +666,8 @@ void VulkanUtilities::createTextureImage(
     // Calculate image size
     VkDeviceSize imageSize = textureWidth * textureWidth * 4;
 
-    if (!pixels) {
+    if (!pixels)
+    {
         throw std::runtime_error("failed to load texture image!");
     }
 
@@ -679,7 +687,7 @@ void VulkanUtilities::createTextureImage(
 
     // Data is pointing to a pointer to the beginning
     // of the stagingBufferMemory
-    void* data;
+    void *data;
     vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
     memcpy(data, pixels, static_cast<size_t>(imageSize));
     vkUnmapMemory(device, stagingBufferMemory);
@@ -744,8 +752,8 @@ void VulkanUtilities::createImage(
     VkImageTiling tiling,
     VkImageUsageFlags usage,
     VkMemoryPropertyFlags properties,
-    VkImage& image,
-    VkDeviceMemory& imageMemory,
+    VkImage &image,
+    VkDeviceMemory &imageMemory,
     VkDevice &device,
     VkPhysicalDevice &physicalDevice)
 {
@@ -781,12 +789,12 @@ void VulkanUtilities::createImage(
     allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
 
     // Allocate memory and binding image object to device memory
-    if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
+    if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
+    {
         throw std::runtime_error("failed to allocate image memory!");
     }
 
     vkBindImageMemory(device, image, imageMemory, 0);
-
 
     // As the result we have an image object with bounded memory with
     // specific characterics
@@ -843,8 +851,7 @@ void VulkanUtilities::copyBufferToImage(
     region.imageExtent = {
         width,
         height,
-        1
-    };
+        1};
 
     // Enqueue buffer to image copy operation
     vkCmdCopyBufferToImage(
@@ -934,13 +941,17 @@ VkFormat VulkanUtilities::findSupportedFormat(
     VkFormatFeatureFlags features,
     VkPhysicalDevice &physicalDevice)
 {
-    for (VkFormat format : candidates) {
+    for (VkFormat format : candidates)
+    {
         VkFormatProperties props;
         vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
 
-        if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
+        if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
+        {
             return format;
-        } else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+        }
+        else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
+        {
             return format;
         }
     }
@@ -948,8 +959,8 @@ VkFormat VulkanUtilities::findSupportedFormat(
     throw std::runtime_error("failed to find supported format!");
 }
 
-
-VkFormat VulkanUtilities::findDepthFormat(VkPhysicalDevice &physicalDevice) {
+VkFormat VulkanUtilities::findDepthFormat(VkPhysicalDevice &physicalDevice)
+{
     return VulkanUtilities::findSupportedFormat(
         {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
         VK_IMAGE_TILING_OPTIMAL,
@@ -997,7 +1008,7 @@ void VulkanUtilities::createDepthResources(
         device);
 }
 
-bool VulkanUtilities::checkValidationLayerSupport(std::vector<const char*> validationLayers)
+bool VulkanUtilities::checkValidationLayerSupport(std::vector<const char *> validationLayers)
 {
     uint32_t layerCount;
     vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -1025,4 +1036,96 @@ bool VulkanUtilities::checkValidationLayerSupport(std::vector<const char*> valid
     }
 
     return true;
+}
+
+std::vector<const char *> VulkanUtilities::getRequiredExtensions(bool enableValidationLayers)
+{
+    uint32_t glfwExtensionCount = 0;
+    const char **glfwExtensions;
+    glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+    std::vector<const char *> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+
+    if (enableValidationLayers)
+    {
+        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
+
+    return extensions;
+}
+
+static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+    VkDebugReportFlagsEXT flags,
+    VkDebugReportObjectTypeEXT objType,
+    uint64_t obj,
+    size_t location,
+    int32_t code,
+    const char *layerPrefix,
+    const char *msg,
+    void *userData)
+{
+    std::cerr << "validation layer: " << msg << std::endl;
+    return VK_FALSE;
+}
+
+VkResult CreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugReportCallbackEXT *pCallback)
+{
+    auto func = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
+    if (func != nullptr)
+    {
+        return func(instance, pCreateInfo, pAllocator, pCallback);
+    }
+    else
+    {
+        return VK_ERROR_EXTENSION_NOT_PRESENT;
+    }
+}
+
+void VulkanUtilities::createInstance(VkInstance &instance, bool enableValidationLayers)
+{
+    VkApplicationInfo appInfo = {};
+    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    appInfo.pApplicationName = "Hello Triangle";
+    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.pEngineName = "No Engine";
+    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.apiVersion = VK_API_VERSION_1_0;
+
+    VkInstanceCreateInfo createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    createInfo.pApplicationInfo = &appInfo;
+
+    auto extensions = VulkanUtilities::getRequiredExtensions(enableValidationLayers);
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+    createInfo.ppEnabledExtensionNames = extensions.data();
+
+    if (enableValidationLayers)
+    {
+        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+        createInfo.ppEnabledLayerNames = validationLayers.data();
+    }
+    else
+    {
+        createInfo.enabledLayerCount = 0;
+    }
+
+    if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Unable to create Vulkan instance.");
+    }
+
+    if (!enableValidationLayers)
+    {
+        return;
+    }
+
+    VkDebugReportCallbackCreateInfoEXT createCallbackInfo = {};
+    createCallbackInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
+    createCallbackInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+    createCallbackInfo.pfnCallback = &debugCallback;
+
+    if (CreateDebugReportCallbackEXT(instance, &createCallbackInfo, nullptr, &debugMessenger) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Unable to setup debug report callback.");
+    }
 }

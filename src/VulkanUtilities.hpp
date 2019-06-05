@@ -4,6 +4,9 @@
 
 class VulkanUtilities
 {
+private:
+    static VkDebugReportCallbackEXT debugMessenger;
+
 public:
     struct SwapchainSupportDetails
     {
@@ -62,7 +65,8 @@ public:
             return attributeDescriptions;
         }
 
-        bool operator==(const Vertex& other) const {
+        bool operator==(const Vertex &other) const
+        {
             return pos == other.pos && color == other.color && texCoord == other.texCoord;
         }
     };
@@ -157,8 +161,8 @@ public:
         VkImageTiling tiling,
         VkImageUsageFlags usage,
         VkMemoryPropertyFlags properties,
-        VkImage& image,
-        VkDeviceMemory& imageMemory,
+        VkImage &image,
+        VkDeviceMemory &imageMemory,
         VkDevice &device,
         VkPhysicalDevice &physicalDevice);
 
@@ -219,5 +223,9 @@ public:
 
     static VkFormat findDepthFormat(VkPhysicalDevice &physicalDevice);
 
-    static bool checkValidationLayerSupport(std::vector<const char*> validationLayers);
+    static bool checkValidationLayerSupport(std::vector<const char *> validationLayers);
+
+    static void createInstance(VkInstance &instance, bool debugEnabled);
+
+    static std::vector<const char *> getRequiredExtensions(bool enableValidationLayers);
 };
