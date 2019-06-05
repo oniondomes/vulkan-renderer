@@ -14,7 +14,9 @@ class VulkanApp
 {
 private:
     GLFWwindow *window;
+
     VkInstance instance;
+    VkSurfaceKHR surface;
     VkSwapchainKHR swapchain;
 
 public:
@@ -60,7 +62,6 @@ public:
 
     void initVulkan()
     {
-        // Create Vulkan instance
         if (enableValidationLayers && !VulkanUtilities::checkValidationLayerSupport(validationLayers))
         {
             std::cerr << "validation layers requested, but not available!" << std::endl;
@@ -70,6 +71,11 @@ public:
         }
 
         VulkanUtilities::createInstance(instance, enableValidationLayers);
+
+        if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Unable to create window surface.");
+        }
     }
 
     void createSwapchain()
