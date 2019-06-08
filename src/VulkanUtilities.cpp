@@ -231,7 +231,10 @@ bool VulkanUtilities::isDeviceSuitable(const VkPhysicalDevice &device, VkSurface
     return extensionsSupported && isComplete && swapChainAdequate && supportedDeviceFeatures.samplerAnisotropy;
 }
 
-int VulkanUtilities::pickPhysicalDevice(VkInstance &instance, VkSurfaceKHR &surface, VkPhysicalDevice &physicalDevice)
+int VulkanUtilities::pickPhysicalDevice(
+    VkInstance &instance,
+    VkSurfaceKHR &surface,
+    VkPhysicalDevice &physicalDevice)
 {
     // Reset physical device.
     physicalDevice = VK_NULL_HANDLE;
@@ -241,7 +244,7 @@ int VulkanUtilities::pickPhysicalDevice(VkInstance &instance, VkSurfaceKHR &surf
 
     if (deviceCount == 0)
     {
-        throw std::runtime_error("failed to find GPUs with Vilkan support!");
+        throw std::runtime_error("Unable to find GPUs with Vilkan support.");
     }
 
     std::vector<VkPhysicalDevice> devices(deviceCount);
@@ -258,13 +261,15 @@ int VulkanUtilities::pickPhysicalDevice(VkInstance &instance, VkSurfaceKHR &surf
 
     if (physicalDevice == VK_NULL_HANDLE)
     {
-        throw std::runtime_error("failed to find suitable GPU!");
+        throw std::runtime_error("Unable to find suitable GPU.");
     }
 
     return 0;
 }
 
-QueueFamilyIndices VulkanUtilities::getGraphicsQueueFamilyIndex(const VkPhysicalDevice &device, VkSurfaceKHR &surface)
+VulkanUtilities::QueueFamilyIndices VulkanUtilities::getGraphicsQueueFamilyIndex(
+    const VkPhysicalDevice &device,
+    VkSurfaceKHR &surface)
 {
     QueueFamilyIndices indices;
 
@@ -356,7 +361,7 @@ int VulkanUtilities::createCommandPool(
 {
     VkCommandPoolCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    createInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+    createInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
     createInfo.flags = 0;
 
     if (vkCreateCommandPool(device, &createInfo, nullptr, &commandPool) != VK_SUCCESS)

@@ -15,6 +15,22 @@ public:
         std::vector<VkPresentModeKHR> presentModes;
     };
 
+    struct QueueFamilyIndices
+    {
+        uint32_t presentFamily = -1;
+        uint32_t graphicsFamily = -1;
+
+        const bool isComplete() const
+        {
+            return graphicsFamily >= 0 && presentFamily >= 0;
+        }
+
+        const std::set<uint32_t> getIndices() const
+        {
+            return { presentFamily, graphicsFamily };
+        }
+    };
+
     struct SwapchainParameters
     {
         VulkanUtilities::SwapchainSupportDetails support;
@@ -83,8 +99,11 @@ public:
     static int pickPhysicalDevice(VkInstance &instance, VkSurfaceKHR &surface, VkPhysicalDevice &device);
     static bool isDeviceSuitable(const VkPhysicalDevice &device, VkSurfaceKHR &surface);
     static VulkanUtilities::SwapchainSupportDetails querySwapchainSupport(const VkPhysicalDevice &device, VkSurfaceKHR &surface);
-    static QueueFamilyIndices getGraphicsQueueFamilyIndex(const VkPhysicalDevice &device, VkSurfaceKHR &surface);
-    static int createCommandPool(const VkDevice &device, VkCommandPool &commandPool, QueueFamilyIndices &queueFamilyIndices);
+    static VulkanUtilities::QueueFamilyIndices getGraphicsQueueFamilyIndex(const VkPhysicalDevice &device, VkSurfaceKHR &surface);
+    static int createCommandPool(
+        const VkDevice &device,
+        VkCommandPool &commandPool,
+        VulkanUtilities::QueueFamilyIndices &queueFamilyIndices);
     static int createLogicalDevice(
         const VkPhysicalDevice physicalDevice,
         std::set<u_int32_t> &queuesIndices,
