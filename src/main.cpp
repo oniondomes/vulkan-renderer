@@ -1,5 +1,6 @@
 #include "VulkanUtilities.hpp"
 #include "Swapchain.hpp"
+#include "Renderer.hpp"
 
 #ifdef NDEBUG
 bool enableValidationLayers = false;
@@ -11,12 +12,6 @@ bool enableValidationLayers = true;
 const int WIDTH = 480;
 const int HEIGHT = 480;
 const int MAX_FRAMES_IN_FLIGHT = 2;
-
-// Resources paths.
-const std::string MODEL_PATH = "./resources/models/cube.obj";
-const std::string TEXTURE_PATH = "./resources/textures/cube.png";
-const std::string VERT_SHADER_PATH = "./resources/shaders/vert.spv";
-const std::string FRAG_SHADER_PATH = "./resources/shaders/frag.spv";
 
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_LUNARG_standard_validation"
@@ -30,6 +25,7 @@ private:
     VkInstance instance;
     VkSurfaceKHR surface;
     Swapchain swapchain;
+    Renderer renderer;
 
 public:
     void mainLoop()
@@ -90,16 +86,14 @@ public:
         }
     }
 
-    void createSwapchain()
-    {
-        swapchain.init(instance, surface, WIDTH, HEIGHT);
-    }
-
     void run()
     {
         createWindow();
         initVulkan();
-        createSwapchain();
+
+        swapchain.init(instance, surface, WIDTH, HEIGHT);
+        renderer.init(swapchain, WIDTH, HEIGHT);
+
         mainLoop();
         cleanup();
     }

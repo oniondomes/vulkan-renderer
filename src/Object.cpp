@@ -8,11 +8,16 @@ Object::Object(std::string &name, std::string &path)
     params.model = glm::mat4(0.0f);
 }
 
+Object::~Object()
+{
+}
+
 void Object::init(
     VkPhysicalDevice &physicalDevice,
     VkDevice &device,
     VkCommandPool &commandPool,
     VkQueue &graphicsQueue)
 {
-
+    Mesh mesh;
+    MeshUtilities::loadMesh(_path, mesh);
 }

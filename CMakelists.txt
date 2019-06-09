@@ -11,6 +11,7 @@ add_executable(
     src/Swapchain.cpp
     src/Object.cpp
     src/MeshUtilities.cpp
+    src/Renderer.cpp
 )
 
 find_package(Vulkan REQUIRED)
