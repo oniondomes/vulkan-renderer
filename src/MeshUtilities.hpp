@@ -55,4 +55,9 @@ typedef struct _Mesh {
     std::vector<uint32_t> indices;
 } Mesh;
 
+class MeshUtilities
+{
+    static void loadMesh(std::string &path, Mesh &mesh);
+};
+
 #endif

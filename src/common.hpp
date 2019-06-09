@@ -18,4 +18,8 @@
 #include <string>
 #include <set>
 
+struct ObjectParams {
+    glm::mat4 model;
+};
+
 #endif
