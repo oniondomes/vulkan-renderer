@@ -7,6 +7,17 @@ bool enableValidationLayers = false;
 bool enableValidationLayers = true;
 #endif
 
+// Surface params.
+const int WIDTH = 480;
+const int HEIGHT = 480;
+const int MAX_FRAMES_IN_FLIGHT = 2;
+
+// Resources paths.
+const std::string MODEL_PATH = "./resources/models/cube.obj";
+const std::string TEXTURE_PATH = "./resources/textures/cube.png";
+const std::string VERT_SHADER_PATH = "./resources/shaders/vert.spv";
+const std::string FRAG_SHADER_PATH = "./resources/shaders/frag.spv";
+
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_LUNARG_standard_validation"
 };
