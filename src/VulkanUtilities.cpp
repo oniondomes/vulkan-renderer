@@ -649,6 +649,7 @@ void VulkanUtilities::transitionImageLayout(
 }
 
 void VulkanUtilities::createTextureImage(
+    std::string &path,
     VkBuffer &stagingBuffer,
     VkDeviceMemory &stagingBufferMemory,
     VkImage &textureImage,
@@ -662,7 +663,7 @@ void VulkanUtilities::createTextureImage(
 
     // Get an array of pixels
     stbi_uc *pixels = stbi_load(
-        TEXTURE_PATH.c_str(),
+        path.c_str(),
         &textureWidth,
         &textureHeight,
         &textureChannel,

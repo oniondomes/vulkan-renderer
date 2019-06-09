@@ -164,6 +164,7 @@ public:
         VkPhysicalDevice &physicalDevice);
 
     static void createTextureImage(
+        std::string &path,
         VkBuffer &stagingBuffer,
         VkDeviceMemory &stagingBufferMemory,
         VkImage &textureImage,
