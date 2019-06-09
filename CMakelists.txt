@@ -4,7 +4,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ")
 
-add_executable(${PROJECT_NAME} src/main.cpp src/VulkanUtilities.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp src/VulkanUtilities.cpp src/Swapchain.cpp)
 
 find_package(Vulkan REQUIRED)
 find_package(glfw3 3.3 REQUIRED)

@@ -247,4 +247,12 @@ public:
     static void createInstance(VkInstance &instance, bool debugEnabled);
 
     static std::vector<const char *> getRequiredExtensions(bool enableValidationLayers);
+
+    static void createSwapchain(
+        VulkanUtilities::SwapchainParameters &parameters,
+        VkSurfaceKHR &surface,
+        VkDevice &device,
+        VulkanUtilities::QueueFamilyIndices &queues,
+        VkSwapchainKHR &swapchain,
+        VkSwapchainKHR oldSwapchain = VK_NULL_HANDLE);
 };

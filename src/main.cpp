@@ -1,4 +1,5 @@
 #include "VulkanUtilities.hpp"
+#include "Swapchain.hpp"
 
 #ifdef NDEBUG
 bool enableValidationLayers = false;
@@ -17,7 +18,7 @@ private:
 
     VkInstance instance;
     VkSurfaceKHR surface;
-    VkSwapchainKHR swapchain;
+    Swapchain swapchain;
 
 public:
     void mainLoop()
@@ -80,6 +81,7 @@ public:
 
     void createSwapchain()
     {
+        swapchain.init(instance, surface, WIDTH, HEIGHT);
     }
 
     void run()

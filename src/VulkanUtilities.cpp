@@ -1134,3 +1134,53 @@ void VulkanUtilities::createInstance(VkInstance &instance, bool enableValidation
         throw std::runtime_error("Unable to setup debug report callback.");
     }
 }
+
+void VulkanUtilities::createSwapchain(
+    VulkanUtilities::SwapchainParameters &parameters,
+    VkSurfaceKHR &surface,
+    VkDevice &device,
+    VulkanUtilities::QueueFamilyIndices &queues,
+    VkSwapchainKHR &swapchain,
+    VkSwapchainKHR oldSwapchain)
+{
+    if (parameters.support.capabilities.maxImageCount > 0 && parameters.imageCount > parameters.support.capabilities.maxImageCount)
+    {
+        parameters.imageCount = parameters.support.capabilities.maxImageCount;
+    }
+
+    VkSwapchainCreateInfoKHR createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    createInfo.surface = surface;
+    createInfo.minImageCount = parameters.imageCount;
+    createInfo.imageFormat = parameters.surface.format;
+    createInfo.imageColorSpace = parameters.surface.colorSpace;
+    createInfo.imageExtent = parameters.extent;
+    createInfo.imageArrayLayers = 1;
+    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+    uint32_t queueFamilyIndices[] = { (uint32_t)(queues.graphicsFamily), (uint32_t)(queues.presentFamily) };
+
+    if (queues.graphicsFamily != queues.presentFamily)
+    {
+        createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+        createInfo.queueFamilyIndexCount = 2;
+        createInfo.pQueueFamilyIndices = queueFamilyIndices;
+    }
+    else
+    {
+        createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        createInfo.queueFamilyIndexCount = 0;
+        createInfo.pQueueFamilyIndices = nullptr;
+    }
+
+    createInfo.preTransform = parameters.support.capabilities.currentTransform;
+    createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    createInfo.presentMode = parameters.mode;
+    createInfo.clipped = VK_TRUE;
+    createInfo.oldSwapchain = oldSwapchain;
+
+    if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapchain) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Unable to create swapchain.");
+    }
+};
