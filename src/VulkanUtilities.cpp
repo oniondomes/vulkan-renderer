@@ -397,7 +397,7 @@ VulkanUtilities::SwapchainParameters VulkanUtilities::generateSwapchainParameter
 };
 
 void VulkanUtilities::createVertexBuffer(
-    std::vector<VulkanUtilities::Vertex> vertices,
+    Mesh &mesh,
     VkDevice &device,
     VkBuffer &vertexBuffer,
     VkPhysicalDevice &physicalDevice,
@@ -405,7 +405,7 @@ void VulkanUtilities::createVertexBuffer(
     VkCommandPool &commandPool,
     VkQueue &graphicsQueue)
 {
-    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+    VkDeviceSize bufferSize = sizeof(mesh.vertices[0]) * mesh.vertices.size();
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -421,7 +421,7 @@ void VulkanUtilities::createVertexBuffer(
 
     void *data;
     vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, vertices.data(), (size_t)bufferSize);
+    memcpy(data, mesh.vertices.data(), (size_t)bufferSize);
     vkUnmapMemory(device, stagingBufferMemory);
 
     VulkanUtilities::createBuffer(
