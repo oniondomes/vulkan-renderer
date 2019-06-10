@@ -39,5 +39,5 @@ void Renderer::init(Swapchain &swapchain, const int width, const int height)
         object.load(physicalDevice, _device, commandPool, graphicsQueue);
     }
 
-    // Object::createDescriptorSetLayout(_device, _textureSampler)
+    Object::createDescriptorSetLayout(_device, _textureSampler);
 }

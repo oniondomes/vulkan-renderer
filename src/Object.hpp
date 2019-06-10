@@ -16,10 +16,9 @@ public:
         VkQueue &graphicsQueue);
 
     static void createDescriptorSetLayout(VkDevice &_device, VkSampler &_textureSampler);
+    static VkDescriptorSetLayout descriptorSetLayout;
 
     ~Object();
-
-    static VkDescriptorSetLayout descriptorSetLayout;
 
     VkBuffer vertexBuffer;
     VkBuffer indexBuffer;
