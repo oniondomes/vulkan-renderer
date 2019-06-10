@@ -15,6 +15,7 @@ public:
     ~Renderer();
 private:
     VkDevice _device;
+    VkSampler _textureSampler;
 
     glm::vec2 _screenSize;
     std::vector<Object> _objects;

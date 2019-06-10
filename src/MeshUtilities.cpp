@@ -3,7 +3,7 @@
 
 #include "MeshUtilities.hpp"
 
-void MeshUtilities::loadMesh(std::string &path, Mesh &mesh)
+void MeshUtilities::loadMesh(const std::string &path, Mesh &mesh)
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;

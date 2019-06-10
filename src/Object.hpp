@@ -6,25 +6,29 @@
 class Object
 {
 public:
-    Object(std::string &name, std::string &path);
+    Object(std::string &name, const std::string *path);
 
     // TODO: all params could be constant
-    void init(
+    void load(
         VkPhysicalDevice &physicalDevice,
         VkDevice &device,
         VkCommandPool &commandPool,
         VkQueue &graphicsQueue);
 
+    static void createDescriptorSetLayout(VkDevice &_device, VkSampler &_textureSampler);
+
     ~Object();
 
-    VkBuffer _vertexBuffer;
-    VkBuffer _indexBuffer;
-    uint32_t _count;
+    static VkDescriptorSetLayout descriptorSetLayout;
+
+    VkBuffer vertexBuffer;
+    VkBuffer indexBuffer;
+    uint32_t indicesCount;
     ObjectParams params;
 
 private:
     std::string _name;
-    std::string _path;
+    const std::string *_path;
 
     VkImage _textureImage;
     VkImageView _textureImageView;
@@ -32,6 +36,9 @@ private:
     VkDeviceMemory _vertexBufferMemory;
     VkDeviceMemory _indexBufferMemory;
     VkDeviceMemory _textureImageMemory;
+
+    VkBuffer _stagingBuffer;
+    VkDeviceMemory _stagingBufferMemory;
 };
 
 #endif

@@ -58,7 +58,7 @@ typedef struct _Mesh {
 class MeshUtilities
 {
 public:
-    static void loadMesh(std::string &path, Mesh &mesh);
+    static void loadMesh(const std::string &path, Mesh &mesh);
 };
 
 #endif
