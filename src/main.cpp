@@ -74,9 +74,9 @@ public:
         {
             std::cerr << "validation layers requested, but not available!" << std::endl;
             enableValidationLayers = false;
-        } else {
-            std::cerr << "Validation layers enabled" << std::endl;
         }
+
+        std::cout << validationLayersSupported << " " << enableValidationLayers << std::endl;
 
         VulkanUtilities::createInstance(instance, enableValidationLayers);
 

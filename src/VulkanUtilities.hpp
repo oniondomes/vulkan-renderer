@@ -6,7 +6,7 @@
 class VulkanUtilities
 {
 private:
-    static VkDebugReportCallbackEXT debugMessenger;
+    static VkDebugUtilsMessengerEXT _debugMessenger;
 
 public:
     struct SwapchainSupportDetails
