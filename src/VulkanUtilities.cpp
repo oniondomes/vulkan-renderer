@@ -921,8 +921,8 @@ void VulkanUtilities::createTextureSampler(VkSampler &textureSampler, VkDevice &
     createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     createInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
-    createInfo.anisotropyEnable = VK_FALSE;
-    // createInfo.maxAnisotropy = 16;
+    createInfo.anisotropyEnable = VK_TRUE;
+    createInfo.maxAnisotropy = 16;
     createInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
     createInfo.unnormalizedCoordinates = VK_FALSE;
 
@@ -936,7 +936,7 @@ void VulkanUtilities::createTextureSampler(VkSampler &textureSampler, VkDevice &
 
     if (vkCreateSampler(device, &createInfo, nullptr, &textureSampler) != VK_SUCCESS)
     {
-        throw std::runtime_error("failed to create texture sampler!");
+        throw std::runtime_error("Unable to create texture sampler.");
     }
 }
 
