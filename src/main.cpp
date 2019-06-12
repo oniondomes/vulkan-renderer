@@ -48,6 +48,8 @@ public:
     {
         glfwDestroyWindow(window);
         glfwTerminate();
+
+        swapchain.clean();
     }
 
     void createWindow()

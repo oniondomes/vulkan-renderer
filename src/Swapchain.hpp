@@ -12,10 +12,12 @@ public:
     void init(VkInstance &instance, VkSurfaceKHR &surface, const int width, const int height);
     void setup(const int width, const int height);
     void unset();
+    void clean();
     void createSyncObjects();
     void createRenderPass();
-    VkResult run(VkRenderPassBeginInfo &info);
     void resize(const int width, const int height);
+
+    VkResult run(VkRenderPassBeginInfo &info);
 
     ~Swapchain();
 

@@ -116,11 +116,41 @@ void Swapchain::setup(const int width, const int height)
     {
         throw std::runtime_error("Unable to allocate command buffers.");
     }
+}
 
+void Swapchain::clean()
+{
+    unset();
+
+    for (size_t i = 0; i < _imageAvailableSemaphores.size(); i++)
+    {
+        vkDestroySemaphore(device, _imageAvailableSemaphores[i], nullptr);
+        vkDestroySemaphore(device, _renderFinishedSemaphores[i], nullptr);
+        vkDestroyFence(device, _inFlightFences[i], nullptr);
+    }
+
+    vkDestroyCommandPool(device, commandPool, nullptr);
+    vkDestroyDevice(device, nullptr);
 }
 
 void Swapchain::unset()
 {
+    for (size_t i = 0; i < _swapchainFramebuffers.size(); i++)
+    {
+        vkDestroyFramebuffer(device, _swapchainFramebuffers[i], nullptr);
+    }
+
+    vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(_commandBuffers.size()), _commandBuffers.data());
+    vkDestroyRenderPass(device, renderPass, nullptr);
+
+    vkDestroyImageView(device, _depthImageView, nullptr);
+    for (size_t i = 0; i < _swapchainImageViews.size(); i++)
+    {
+        vkDestroyImageView(device, _swapchainImageViews[i], nullptr);
+    }
+    vkDestroyImage(device, _depthImage, nullptr);
+    vkFreeMemory(device, _depthImageMemory, nullptr);
+    vkDestroySwapchainKHR(device, _swapchain, nullptr);
 }
 
 void Swapchain::createSyncObjects()
