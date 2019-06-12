@@ -76,8 +76,6 @@ public:
             enableValidationLayers = false;
         }
 
-        std::cout << validationLayersSupported << " " << enableValidationLayers << std::endl;
-
         VulkanUtilities::createInstance(instance, enableValidationLayers);
 
         if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS)

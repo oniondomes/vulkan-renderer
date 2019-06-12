@@ -58,7 +58,7 @@ public:
         const VkDevice &device,
         VkCommandPool &commandPool,
         VulkanUtilities::QueueFamilyIndices &queueFamilyIndices);
-    static int createLogicalDevice(
+    static void createLogicalDevice(
         const VkPhysicalDevice physicalDevice,
         std::set<u_int32_t> &queuesIndices,
         VkPhysicalDeviceFeatures &deviceFeatures,
@@ -129,6 +129,8 @@ public:
         VkPhysicalDevice &physicalDevice);
 
     static void createImage(
+        VkPhysicalDevice &physicalDevice,
+        VkDevice &device,
         uint32_t width,
         uint32_t height,
         VkFormat format,
@@ -136,9 +138,7 @@ public:
         VkImageUsageFlags usage,
         VkMemoryPropertyFlags properties,
         VkImage &image,
-        VkDeviceMemory &imageMemory,
-        VkDevice &device,
-        VkPhysicalDevice &physicalDevice);
+        VkDeviceMemory &imageMemory);
 
     static VkCommandBuffer beginSingleTimeCommands(VkCommandPool &commandPool, VkDevice &device);
 

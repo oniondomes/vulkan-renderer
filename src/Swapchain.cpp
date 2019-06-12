@@ -20,6 +20,7 @@ void Swapchain::init(VkInstance &instance, VkSurfaceKHR &surface, const int widt
     std::set<uint32_t> queueIndices = queues.getIndices();
 
     VkPhysicalDeviceFeatures deviceFeatures = {};
+    deviceFeatures.samplerAnisotropy = VK_TRUE;
 
     VulkanUtilities::createLogicalDevice(physicalDevice, queueIndices, deviceFeatures, device);
     // Retrieve references to the queues
@@ -51,11 +52,75 @@ void Swapchain::setup(const int width, const int height)
 
     // Render pass.
     createRenderPass();
+
+    VkFormat depthFormat = VulkanUtilities::findDepthFormat(physicalDevice);
+    VulkanUtilities::createDepthResources(
+        _depthImage,
+        _depthImageMemory,
+        _depthImageView,
+        parameters.extent,
+        graphicsQueue,
+        commandPool,
+        device,
+        physicalDevice);
+
+    // Obtain presentable images from associated with the swapchain.
+    vkGetSwapchainImagesKHR(device, _swapchain, &parameters.imageCount, nullptr);
+    imageCount = parameters.imageCount;
+    _swapchainImages.resize(imageCount);
+    std::cout << "Swapchain using " << imageCount << " images." << std::endl;
+    vkGetSwapchainImagesKHR(device, _swapchain, &parameters.imageCount, _swapchainImages.data());
+
+    // Create a view for each image.
+    _swapchainImageViews.resize(imageCount);
+    for (size_t i = 0; i < imageCount; i++)
+    {
+        _swapchainImageViews[i] = VulkanUtilities::createImageView(
+            _swapchainImages[i],
+            parameters.surface.format,
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            device);
+    }
+
+    // Create swapchain framebuffers.
+    _swapchainFramebuffers.resize(imageCount);
+
+    for (size_t i = 0; i < imageCount; i++)
+    {
+        std::array<VkImageView, 2> attachments = {_swapchainImageViews[i], _depthImageView};
+
+        VkFramebufferCreateInfo framebufferInfo = {};
+        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.renderPass = renderPass;
+        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+        framebufferInfo.pAttachments = attachments.data();
+        framebufferInfo.width = parameters.extent.width;
+        framebufferInfo.height = parameters.extent.height;
+        framebufferInfo.layers = 1;
+        if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &_swapchainFramebuffers[i]) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Unable to create swap framebuffers.");
+        }
+    }
+
+    // Create command buffers.
+
+    _commandBuffers.resize(_swapchainFramebuffers.size());
+    VkCommandBufferAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = commandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = (uint32_t)_commandBuffers.size();
+
+    if (vkAllocateCommandBuffers(device, &allocInfo, _commandBuffers.data()) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Unable to allocate command buffers.");
+    }
+
 }
 
 void Swapchain::unset()
 {
-
 }
 
 void Swapchain::createSyncObjects()
@@ -82,11 +147,12 @@ void Swapchain::createSyncObjects()
     }
 }
 
+// TODO: What the hell is render pass?
 void Swapchain::createRenderPass()
 {
     // Color attachment.
     VkAttachmentDescription colorAttachment = {};
-    colorAttachment.format = swapchainImageFormat;
+    colorAttachment.format = parameters.surface.format;
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -131,7 +197,7 @@ void Swapchain::createRenderPass()
     dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
     // Render pass.
-    std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
+    std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
     VkRenderPassCreateInfo renderPassInfo = {};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
@@ -149,7 +215,8 @@ void Swapchain::createRenderPass()
 
 void Swapchain::resize(const int width, const int height)
 {
-    if (width == parameters.extent.width && height == parameters.extent.height) {
+    if (width == parameters.extent.width && height == parameters.extent.height)
+    {
         return;
     }
 

@@ -308,7 +308,7 @@ VulkanUtilities::QueueFamilyIndices VulkanUtilities::getGraphicsQueueFamilyIndex
     return indices;
 }
 
-int VulkanUtilities::createLogicalDevice(
+void VulkanUtilities::createLogicalDevice(
     const VkPhysicalDevice physicalDevice,
     std::set<u_int32_t> &queuesIndices,
     VkPhysicalDeviceFeatures &deviceFeatures,
@@ -349,10 +349,8 @@ int VulkanUtilities::createLogicalDevice(
 
     if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
     {
-        std::cerr << "Unable to create logical Vulkan device." << std::endl;
-        return 3;
+        throw std::runtime_error("Unable to create logical Vulkan device.");
     }
-    return 0;
 }
 
 int VulkanUtilities::createCommandPool(
@@ -709,6 +707,8 @@ void VulkanUtilities::createTextureImage(
     // My guess is that later we will connect created image object to
     // a buffer (or just copy bytes from it).
     VulkanUtilities::createImage(
+        physicalDevice,
+        device,
         textureWidth,
         textureHeight,
         VK_FORMAT_R8G8B8A8_UNORM,
@@ -716,9 +716,7 @@ void VulkanUtilities::createTextureImage(
         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         textureImage,
-        textureImageMemory,
-        device,
-        physicalDevice);
+        textureImageMemory);
 
     // Now I need to copy stagingBuffer to textureImage
 
@@ -753,6 +751,8 @@ void VulkanUtilities::createTextureImage(
 }
 
 void VulkanUtilities::createImage(
+    VkPhysicalDevice &physicalDevice,
+    VkDevice &device,
     uint32_t width,
     uint32_t height,
     VkFormat format,
@@ -760,9 +760,7 @@ void VulkanUtilities::createImage(
     VkImageUsageFlags usage,
     VkMemoryPropertyFlags properties,
     VkImage &image,
-    VkDeviceMemory &imageMemory,
-    VkDevice &device,
-    VkPhysicalDevice &physicalDevice)
+    VkDeviceMemory &imageMemory)
 {
     // Set image object info
     VkImageCreateInfo imageInfo = {};
@@ -923,8 +921,8 @@ void VulkanUtilities::createTextureSampler(VkSampler &textureSampler, VkDevice &
     createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     createInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
-    createInfo.anisotropyEnable = VK_TRUE;
-    createInfo.maxAnisotropy = 16;
+    createInfo.anisotropyEnable = VK_FALSE;
+    // createInfo.maxAnisotropy = 16;
     createInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
     createInfo.unnormalizedCoordinates = VK_FALSE;
 
@@ -988,6 +986,8 @@ void VulkanUtilities::createDepthResources(
     VkFormat depthFormat = findDepthFormat(physicalDevice);
 
     VulkanUtilities::createImage(
+        physicalDevice,
+        device,
         swapChainExtent.width,
         swapChainExtent.height,
         depthFormat,
@@ -995,9 +995,7 @@ void VulkanUtilities::createDepthResources(
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         depthImage,
-        depthImageMemory,
-        device,
-        physicalDevice);
+        depthImageMemory);
 
     depthImageView = VulkanUtilities::createImageView(
         depthImage,
@@ -1159,7 +1157,7 @@ void VulkanUtilities::createSwapchain(
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    uint32_t queueFamilyIndices[] = { (uint32_t)(queues.graphicsFamily), (uint32_t)(queues.presentFamily) };
+    uint32_t queueFamilyIndices[] = {(uint32_t)(queues.graphicsFamily), (uint32_t)(queues.presentFamily)};
 
     if (queues.graphicsFamily != queues.presentFamily)
     {
