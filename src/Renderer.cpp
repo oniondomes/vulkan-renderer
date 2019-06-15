@@ -1,4 +1,5 @@
 #include "Renderer.hpp"
+#include "Pipeline.hpp"
 
 // Resources paths.
 const std::string MODEL_PATH = "./resources/models/cube.obj";
@@ -19,8 +20,8 @@ void Renderer::init(Swapchain &swapchain, const int width, const int height)
     // TODO: These can be constant
     auto &physicalDevice = swapchain.physicalDevice;
     auto &commandPool = swapchain.commandPool;
-    auto &finalRenderPass = swapchain.renderPass;
-    auto & graphicsQueue = swapchain.graphicsQueue;
+    auto &renderPass = swapchain.renderPass;
+    auto &graphicsQueue = swapchain.graphicsQueue;
     uint32_t imageCount = swapchain.maxFramesInFlight;
     _device = swapchain.device;
 
@@ -40,4 +41,14 @@ void Renderer::init(Swapchain &swapchain, const int width, const int height)
     }
 
     Object::createDescriptorSetLayout(_device, _textureSampler);
+
+    Pipeline::create(
+        _device,
+        swapchain,
+        _screenSize[0],
+        _screenSize[1],
+        Object::descriptorSetLayout,
+        _objectPipelineLayout,
+        renderPass,
+        _objectPipeline);
 }

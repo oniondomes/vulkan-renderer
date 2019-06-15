@@ -10,15 +10,20 @@ class Renderer
 public:
     Renderer();
 
-    void init(Swapchain &swapchain, int const width, int const heigth);
+    void init(Swapchain &swapchain, const int width, const int heigth);
 
     ~Renderer();
+
 private:
     VkDevice _device;
     VkSampler _textureSampler;
 
     glm::vec2 _screenSize;
     std::vector<Object> _objects;
+
+    // Pipelines.
+    VkPipelineLayout _objectPipelineLayout;
+    VkPipeline _objectPipeline;
 };
 
 #endif
