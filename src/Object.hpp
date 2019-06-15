@@ -15,6 +15,13 @@ public:
         VkCommandPool &commandPool,
         VkQueue &graphicsQueue);
 
+    void generateDescriptorSets(
+        const VkDevice &device,
+        const VkDescriptorPool &descriptorPool,
+        const std::vector<VkBuffer> &uniformBuffers,
+        VkSampler &textureSampler,
+        uint32_t imageCount);
+
     static void createDescriptorSetLayout(VkDevice &_device, VkSampler &_textureSampler);
     static VkDescriptorSetLayout descriptorSetLayout;
 
@@ -38,6 +45,8 @@ private:
 
     VkBuffer _stagingBuffer;
     VkDeviceMemory _stagingBufferMemory;
+
+    std::vector<VkDescriptorSet> _descriptorSets;
 };
 
 #endif

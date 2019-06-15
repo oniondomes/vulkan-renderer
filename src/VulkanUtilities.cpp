@@ -171,7 +171,7 @@ std::vector<char> VulkanUtilities::readFile(const std::string &filename)
 
     if (!file.is_open())
     {
-        throw std::runtime_error("failed to open file!");
+        throw std::runtime_error("Unable to open file.");
     }
 
     size_t fileSize = (size_t)file.tellg();
