@@ -254,3 +254,31 @@ void Swapchain::resize(const int width, const int height)
     unset();
     setup(width, height);
 }
+
+VkResult Swapchain::run(VkRenderPassBeginInfo &info)
+{
+    // Wait for current command buffer
+    vkWaitForFences(device, 1, &_inFlightFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
+
+    // Retrieve next image from swapchain
+    VkResult status = vkAcquireNextImageKHR(
+        device,
+        _swapchain,
+        std::numeric_limits<uint64_t>::max(),
+        _imageAvailableSemaphores[currentFrame],
+        VK_NULL_HANDLE,
+        &imageIndex);
+
+    if (status != VK_SUCCESS && status != VK_SUBOPTIMAL_KHR)
+    {
+        return status;
+    }
+
+    info = {};
+    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    info.renderPass = renderPass;
+    info.framebuffer = _swapchainFramebuffers[imageIndex];
+    info.renderArea.offset = {0, 0};
+    info.renderArea.extent = parameters.extent;
+    return status;
+}
