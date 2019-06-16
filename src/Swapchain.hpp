@@ -8,6 +8,7 @@ class Swapchain
 {
 public:
     Swapchain();
+    ~Swapchain();
 
     void init(VkInstance &instance, VkSurfaceKHR &surface, const int width, const int height);
     void setup(const int width, const int height);
@@ -16,17 +17,14 @@ public:
     void createSyncObjects();
     void createRenderPass();
     void resize(const int width, const int height);
-
+    VkResult commit();
     VkResult run(VkRenderPassBeginInfo &info);
 
-    void step() { currentFrame = (currentFrame + 1) % count; }
-
+    void step() { currentFrame = (currentFrame + 1) % imageCount; }
     VkCommandBuffer &getCommandBuffer() { return _commandBuffers[imageIndex]; }
     VkSemaphore &getStartSemaphore() { return _imageAvailableSemaphores[currentFrame]; }
     VkSemaphore &getEndSemaphore() { return _renderFinishedSemaphores[currentFrame]; }
     VkFence &getFence() { return _inFlightFences[currentFrame]; }
-
-    ~Swapchain();
 
     VkPhysicalDevice physicalDevice;
     VkDevice device;
@@ -36,8 +34,8 @@ public:
 
     VulkanUtilities::SwapchainParameters parameters;
 
-    uint32_t currentFrame;
-    uint32_t imageIndex;
+    uint32_t currentFrame = 0;
+    uint32_t imageIndex = 0;
     uint32_t imageCount;
 
 private:

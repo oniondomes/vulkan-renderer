@@ -27,21 +27,40 @@ private:
     Swapchain swapchain;
     Renderer renderer;
 
+    VkRenderPassBeginInfo renderPassInfo;
+
 public:
     void mainLoop()
     {
+        double timer = glfwGetTime();
+
         while (!glfwWindowShouldClose(window))
         {
-            // Check user input
-
-            // Check window events
             glfwPollEvents();
 
-            // Draw frame
+            double currentTime = glfwGetTime();
+            double frameTime = currentTime - timer;
+            timer = currentTime;
+            renderer.update(frameTime);
+
+            VkResult status = swapchain.run(renderPassInfo);
+            if (status == VK_SUCCESS || status == VK_SUBOPTIMAL_KHR)
+            {
+                renderer.encode(
+                    swapchain.graphicsQueue,
+                    swapchain.imageIndex,
+                    swapchain.getCommandBuffer(),
+                    renderPassInfo,
+                    swapchain.getStartSemaphore(),
+                    swapchain.getEndSemaphore(),
+                    swapchain.getFence());
+
+                status = swapchain.commit();
+            }
+            swapchain.step();
         }
 
-        // Need device to a function
-        // vkDeviceWaitIdle();
+        vkDeviceWaitIdle(swapchain.device);
     }
 
     void cleanup()
@@ -74,7 +93,7 @@ public:
     {
         if (enableValidationLayers && !VulkanUtilities::checkValidationLayerSupport(validationLayers))
         {
-            std::cerr << "validation layers requested, but not available!" << std::endl;
+            std::cerr << "Validation layers requested, but not available." << std::endl;
             enableValidationLayers = false;
         }
 

@@ -282,3 +282,20 @@ VkResult Swapchain::run(VkRenderPassBeginInfo &info)
     info.renderArea.extent = parameters.extent;
     return status;
 }
+
+VkResult Swapchain::commit()
+{
+    VkSemaphore signalSemaphores[] = {_renderFinishedSemaphores[currentFrame]};
+    // Present on swap chain.
+    VkPresentInfoKHR presentInfo = {};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.waitSemaphoreCount = 1;
+    // Check for the command buffer to be done.
+    presentInfo.pWaitSemaphores = signalSemaphores;
+    VkSwapchainKHR swapChains[] = {_swapchain};
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = swapChains;
+    presentInfo.pImageIndices = &imageIndex;
+    VkResult status = vkQueuePresentKHR(_presentQueue, &presentInfo);
+    return status;
+}
