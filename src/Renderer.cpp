@@ -22,7 +22,7 @@ void Renderer::init(Swapchain &swapchain, const int width, const int height)
     auto &commandPool = swapchain.commandPool;
     auto &renderPass = swapchain.renderPass;
     auto &graphicsQueue = swapchain.graphicsQueue;
-    uint32_t imageCount = swapchain.maxFramesInFlight;
+    uint32_t imageCount = swapchain.imageCount;
     _device = swapchain.device;
 
 

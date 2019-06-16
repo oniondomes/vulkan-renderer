@@ -47,7 +47,7 @@ void Swapchain::setup(const int width, const int height)
     VulkanUtilities::QueueFamilyIndices queues = VulkanUtilities::getGraphicsQueueFamilyIndex(physicalDevice, _surface);
 
     parameters = VulkanUtilities::generateSwapchainParameters(physicalDevice, _surface, width, height);
-    maxFramesInFlight = parameters.imageCount;
+    imageCount = parameters.imageCount;
     VulkanUtilities::createSwapchain(parameters, _surface, device, queues, _swapchain);
 
     // Render pass.
@@ -155,9 +155,9 @@ void Swapchain::unset()
 
 void Swapchain::createSyncObjects()
 {
-    _imageAvailableSemaphores.resize(maxFramesInFlight);
-    _renderFinishedSemaphores.resize(maxFramesInFlight);
-    _inFlightFences.resize(maxFramesInFlight);
+    _imageAvailableSemaphores.resize(imageCount);
+    _renderFinishedSemaphores.resize(imageCount);
+    _inFlightFences.resize(imageCount);
 
     VkSemaphoreCreateInfo semaphoreInfo = {};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -166,7 +166,7 @@ void Swapchain::createSyncObjects()
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    for (size_t i = 0; i < maxFramesInFlight; i++)
+    for (size_t i = 0; i < imageCount; i++)
     {
         if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &_imageAvailableSemaphores[i]) != VK_SUCCESS ||
             vkCreateSemaphore(device, &semaphoreInfo, nullptr, &_renderFinishedSemaphores[i]) != VK_SUCCESS ||

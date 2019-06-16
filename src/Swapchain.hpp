@@ -19,6 +19,13 @@ public:
 
     VkResult run(VkRenderPassBeginInfo &info);
 
+    void step() { currentFrame = (currentFrame + 1) % count; }
+
+    VkCommandBuffer &getCommandBuffer() { return _commandBuffers[imageIndex]; }
+    VkSemaphore &getStartSemaphore() { return _imageAvailableSemaphores[currentFrame]; }
+    VkSemaphore &getEndSemaphore() { return _renderFinishedSemaphores[currentFrame]; }
+    VkFence &getFence() { return _inFlightFences[currentFrame]; }
+
     ~Swapchain();
 
     VkPhysicalDevice physicalDevice;
@@ -29,12 +36,8 @@ public:
 
     VulkanUtilities::SwapchainParameters parameters;
 
-    uint32_t maxFramesInFlight;
     uint32_t currentFrame;
-
     uint32_t imageIndex;
-
-    // Number of presentable images.
     uint32_t imageCount;
 
 private:
