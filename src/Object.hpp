@@ -25,6 +25,8 @@ public:
     static void createDescriptorSetLayout(VkDevice &_device, VkSampler &_textureSampler);
     static VkDescriptorSetLayout descriptorSetLayout;
 
+    const VkDescriptorSet & descriptorSet(const int i){ return _descriptorSets[i]; }
+
     ~Object();
 
     VkBuffer vertexBuffer;

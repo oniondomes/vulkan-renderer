@@ -25,7 +25,6 @@ void Renderer::init(Swapchain &swapchain, const int width, const int height)
     uint32_t imageCount = swapchain.imageCount;
     _device = swapchain.device;
 
-
     std::string name("cube");
     Object cube(name, &MODEL_PATH);
 
@@ -105,4 +104,84 @@ void Renderer::createDescriptorPool(uint32_t imageCount)
 void Renderer::update(const double deltaTime)
 {
     _time += deltaTime;
+}
+
+void Renderer::encode(
+    const VkQueue &graphicsQueue,
+    const uint32_t imageIndex,
+    VkCommandBuffer &commandBuffer,
+    VkRenderPassBeginInfo &renderPassInfo,
+    const VkSemaphore &startSemaphore,
+    const VkSemaphore &endSemaphore,
+    const VkFence &submissionFence)
+{
+    VkDeviceSize offsets[] = {0};
+    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+
+    updateUniforms(imageIndex);
+
+    VkCommandBufferBeginInfo beginInfo = {};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+    beginInfo.pInheritanceInfo = nullptr; // Optional
+
+    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to begin recording command buffer!");
+    }
+
+    std::array<VkClearValue, 2> clearValues = {};
+    clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+    clearValues[1].depthStencil = {1.0f, 0};
+
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    renderPassInfo.pClearValues = clearValues.data();
+
+    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _objectPipeline);
+
+    for (auto &object : _objects)
+    {
+        VkBuffer vertexBuffers[] = {object.vertexBuffer};
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+        vkCmdBindIndexBuffer(commandBuffer, object.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _objectPipelineLayout, 0, 1, &object.descriptorSet(imageIndex), 0, nullptr);
+        vkCmdDrawIndexed(commandBuffer, object.indicesCount, 1, 0, 0, 0);
+    }
+
+    vkCmdEndRenderPass(commandBuffer);
+
+    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to record command buffer!");
+    }
+
+    VkSubmitInfo submitInfo = {};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = &startSemaphore;
+    submitInfo.pWaitDstStageMask = waitStages;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = &endSemaphore;
+
+    vkResetFences(_device, 1, &submissionFence);
+    vkQueueSubmit(graphicsQueue, 1, &submitInfo, submissionFence);
+}
+
+void Renderer::updateUniforms(const uint32_t imageIndex)
+{
+    VulkanUtilities::UniformBufferObject ubo = {};
+    ubo.model = glm::rotate(glm::mat4(1.0f), (float)_time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.view = glm::lookAt(glm::vec3(5.0f, 5.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.proj = glm::perspective(glm::radians(45.0f), _screenSize[0] / (float)_screenSize[1], 0.1f, 10.0f);
+    ubo.proj[1][1] *= -1;
+
+    // Copy the data in the uniform buffer object to the current uniform buffer.
+    void *data;
+    vkMapMemory(_device, _uniformBuffersMemory[imageIndex], 0, sizeof(ubo), 0, &data);
+    memcpy(data, &ubo, sizeof(ubo));
+    vkUnmapMemory(_device, _uniformBuffersMemory[imageIndex]);
 }

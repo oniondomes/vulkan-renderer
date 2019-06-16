@@ -13,6 +13,15 @@ public:
     void init(Swapchain &swapchain, const int width, const int heigth);
     void update(const double deltaTime);
     void createDescriptorPool(uint32_t imageCount);
+    void updateUniforms(const uint32_t imageIndex);
+    void encode(
+        const VkQueue &graphicsQueue,
+        const uint32_t imageIndex,
+        VkCommandBuffer &commandBuffer,
+        VkRenderPassBeginInfo &renderPassInfo,
+        const VkSemaphore &startSemaphore,
+        const VkSemaphore &endSemaphore,
+        const VkFence &submissionFence);
 
     ~Renderer();
 
