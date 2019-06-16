@@ -101,3 +101,8 @@ void Renderer::createDescriptorPool(uint32_t imageCount)
         throw std::runtime_error("Unable to create descriptor pool.");
     }
 }
+
+void Renderer::update(const double deltaTime)
+{
+    _time += deltaTime;
+}

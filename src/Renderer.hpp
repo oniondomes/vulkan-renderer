@@ -11,11 +11,14 @@ public:
     Renderer();
 
     void init(Swapchain &swapchain, const int width, const int heigth);
+    void update(const double deltaTime);
     void createDescriptorPool(uint32_t imageCount);
 
     ~Renderer();
 
 private:
+    double _time = 0.0;
+
     VkDevice _device;
     VkSampler _textureSampler;
 
