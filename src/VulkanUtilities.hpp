@@ -54,10 +54,6 @@ public:
     static bool isDeviceSuitable(const VkPhysicalDevice &device, VkSurfaceKHR &surface);
     static VulkanUtilities::SwapchainSupportDetails querySwapchainSupport(const VkPhysicalDevice &device, VkSurfaceKHR &surface);
     static VulkanUtilities::QueueFamilyIndices getGraphicsQueueFamilyIndex(const VkPhysicalDevice &device, VkSurfaceKHR &surface);
-    static int createCommandPool(
-        const VkDevice &device,
-        VkCommandPool &commandPool,
-        VulkanUtilities::QueueFamilyIndices &queueFamilyIndices);
     static void createLogicalDevice(
         const VkPhysicalDevice physicalDevice,
         std::set<u_int32_t> &queuesIndices,
@@ -109,13 +105,6 @@ public:
         VkDevice &device,
         VkCommandPool &commandPool,
         VkQueue &graphicsQueue);
-
-    static void createUniformBuffers(
-        std::vector<VkBuffer> &uniformBuffers,
-        std::vector<VkDeviceMemory> &uniformBuffersMemory,
-        std::vector<VkImage> &swapchainImages,
-        VkDevice &device,
-        VkPhysicalDevice &physicalDevice);
 
     static void createTextureImage(
         std::string &path,

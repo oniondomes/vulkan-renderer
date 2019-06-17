@@ -353,25 +353,6 @@ void VulkanUtilities::createLogicalDevice(
     }
 }
 
-int VulkanUtilities::createCommandPool(
-    const VkDevice &device,
-    VkCommandPool &commandPool,
-    QueueFamilyIndices &queueFamilyIndices)
-{
-    VkCommandPoolCreateInfo createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    createInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
-    createInfo.flags = 0;
-
-    if (vkCreateCommandPool(device, &createInfo, nullptr, &commandPool) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Unable to create command pool!");
-        return 3;
-    }
-
-    return 0;
-}
-
 VulkanUtilities::SwapchainParameters VulkanUtilities::generateSwapchainParameters(
     VkPhysicalDevice &physicalDevice,
     VkSurfaceKHR &surface,
@@ -521,31 +502,6 @@ void VulkanUtilities::createIndexBuffer(
 
     vkDestroyBuffer(device, stagingBuffer, nullptr);
     vkFreeMemory(device, stagingBufferMemory, nullptr);
-}
-
-void VulkanUtilities::createUniformBuffers(
-    std::vector<VkBuffer> &uniformBuffers,
-    std::vector<VkDeviceMemory> &uniformBuffersMemory,
-    std::vector<VkImage> &swapchainImages,
-    VkDevice &device,
-    VkPhysicalDevice &physicalDevice)
-{
-    VkDeviceSize bufferSize = sizeof(VulkanUtilities::UniformBufferObject);
-
-    uniformBuffers.resize(swapchainImages.size());
-    uniformBuffersMemory.resize(swapchainImages.size());
-
-    for (size_t i = 0; i < swapchainImages.size(); i++)
-    {
-        VulkanUtilities::createBuffer(
-            device,
-            physicalDevice,
-            bufferSize,
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            uniformBuffers[i],
-            uniformBuffersMemory[i]);
-    }
 }
 
 void VulkanUtilities::transitionImageLayout(
