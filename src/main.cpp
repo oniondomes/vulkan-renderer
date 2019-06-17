@@ -20,6 +20,9 @@ const std::vector<const char*> validationLayers = {
 class VulkanApp
 {
 private:
+    int width;
+    int height;
+
     GLFWwindow *window;
 
     VkInstance instance;
@@ -82,6 +85,7 @@ public:
 
         window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
         glfwSetWindowUserPointer(window, this);
+        glfwGetFramebufferSize(window, &width, &height);
 
         if (!window)
         {
@@ -110,8 +114,8 @@ public:
         createWindow();
         initVulkan();
 
-        swapchain.init(instance, surface, WIDTH, HEIGHT);
-        renderer.init(swapchain, WIDTH, HEIGHT);
+        swapchain.init(instance, surface, width, height);
+        renderer.init(swapchain, width, height);
 
         mainLoop();
         cleanup();
