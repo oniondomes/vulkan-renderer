@@ -22,6 +22,8 @@ public:
         VkSampler &textureSampler,
         uint32_t imageCount);
 
+    void clean(VkDevice &device);
+
     static void createDescriptorSetLayout(VkDevice &_device, VkSampler &_textureSampler);
     static VkDescriptorSetLayout descriptorSetLayout;
 

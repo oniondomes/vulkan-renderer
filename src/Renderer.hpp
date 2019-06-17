@@ -22,6 +22,7 @@ public:
         const VkSemaphore &startSemaphore,
         const VkSemaphore &endSemaphore,
         const VkFence &submissionFence);
+    void clean();
 
     ~Renderer();
 

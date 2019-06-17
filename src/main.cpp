@@ -68,10 +68,11 @@ public:
 
     void cleanup()
     {
+        renderer.clean();
+        swapchain.clean();
+
         glfwDestroyWindow(window);
         glfwTerminate();
-
-        swapchain.clean();
     }
 
     void createWindow()

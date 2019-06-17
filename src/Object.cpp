@@ -150,3 +150,16 @@ void Object::generateDescriptorSets(
         vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
 }
+
+void Object::clean(VkDevice &device)
+{
+    vkDestroyBuffer(device, indexBuffer, nullptr);
+    vkDestroyBuffer(device, vertexBuffer, nullptr);
+
+    vkFreeMemory(device, _vertexBufferMemory, nullptr);
+    vkFreeMemory(device, _indexBufferMemory, nullptr);
+    vkFreeMemory(device, _textureImageMemory, nullptr);
+
+    vkDestroyImageView(device, _textureImageView, nullptr);
+    vkDestroyImage(device, _textureImage, nullptr);
+}

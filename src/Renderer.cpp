@@ -185,3 +185,23 @@ void Renderer::updateUniforms(const uint32_t imageIndex)
     memcpy(data, &ubo, sizeof(ubo));
     vkUnmapMemory(_device, _uniformBuffersMemory[imageIndex]);
 }
+
+void Renderer::clean()
+{
+    vkDestroyDescriptorPool(_device, _descriptorPool, nullptr);
+    vkDestroyPipeline(_device, _objectPipeline, nullptr);
+    vkDestroyPipelineLayout(_device, _objectPipelineLayout, nullptr);
+    vkDestroySampler(_device, _textureSampler, nullptr);
+    vkDestroyDescriptorSetLayout(_device, Object::descriptorSetLayout, nullptr);
+
+    for (size_t i = 0; i < _uniformBuffers.size(); i++)
+    {
+        vkFreeMemory(_device, _uniformBuffersMemory[i], nullptr);
+        vkDestroyBuffer(_device, _uniformBuffers[i], nullptr);
+    }
+
+    for (auto &object : _objects)
+    {
+        object.clean(_device);
+    }
+}
