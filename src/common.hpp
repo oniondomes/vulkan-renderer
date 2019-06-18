@@ -1,4 +1,5 @@
-#pragma once
+#ifndef common_h
+#define common_h
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -16,18 +17,9 @@
 #include <iostream>
 #include <string>
 #include <set>
-#include <optional.hpp>
 
-const int WIDTH = 480;
-const int HEIGHT = 480;
-
-struct QueueFamilyIndices
-{
-    std::experimental::optional<uint32_t> presentFamily;
-    std::experimental::optional<uint32_t> graphicsFamily;
-
-    bool isComplete()
-    {
-        return graphicsFamily.has_value() && presentFamily.has_value();
-    }
+struct ObjectParams {
+    glm::mat4 model;
 };
+
+#endif
