@@ -43,7 +43,6 @@ void Renderer::init(Swapchain &swapchain, const int width, const int height)
 
     Pipeline::create(
         _device,
-        swapchain,
         _screenSize[0],
         _screenSize[1],
         Object::descriptorSetLayout,

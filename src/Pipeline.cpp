@@ -18,7 +18,6 @@ VkShaderModule Pipeline::createShaderModule(VkDevice &device, const std::vector<
 
 void Pipeline::create(
     VkDevice &device,
-    Swapchain &swapchain,
     const uint32_t width,
     const uint32_t height,
     VkDescriptorSetLayout &descriptorSetLayout,
