@@ -1,6 +1,7 @@
 #include "VulkanUtilities.hpp"
 #include "Swapchain.hpp"
 #include "Renderer.hpp"
+#include "Input.hpp"
 
 #ifdef NDEBUG
 bool enableValidationLayers = false;
@@ -9,13 +10,17 @@ bool enableValidationLayers = true;
 #endif
 
 // Surface params.
-const int WIDTH = 480;
-const int HEIGHT = 480;
-const int MAX_FRAMES_IN_FLIGHT = 2;
+static const int WIDTH = 480;
+static const int HEIGHT = 480;
+static const int MAX_FRAMES_IN_FLIGHT = 2;
 
-const std::vector<const char*> validationLayers = {
-    "VK_LAYER_LUNARG_standard_validation"
-};
+static const std::vector<const char *> validationLayers = {
+    "VK_LAYER_LUNARG_standard_validation"};
+
+static void resizeCallback(GLFWwindow *window, int width, int height)
+{
+    Input::instance().resizeEvent(width, height);
+}
 
 class VulkanApp
 {
@@ -39,8 +44,7 @@ public:
 
         while (!glfwWindowShouldClose(window))
         {
-            glfwPollEvents();
-
+            Input::instance().update();
             double currentTime = glfwGetTime();
             double frameTime = currentTime - timer;
             timer = currentTime;
@@ -60,6 +64,24 @@ public:
 
                 status = swapchain.commit();
             }
+
+            if (Input::instance().isResized())
+            {
+                int width = 0;
+                int height = 0;
+
+                while (width == 0 || height == 0)
+                {
+                    glfwGetFramebufferSize(window, &width, &height);
+                    glfwWaitEvents();
+                }
+
+                Input::instance().resizeEvent(width, height);
+
+                swapchain.resize(width, height);
+                renderer.resize(swapchain.renderPass, width, height);
+            }
+
             swapchain.step();
         }
 
@@ -92,6 +114,8 @@ public:
         {
             throw std::runtime_error("Unable to create GLFW window.");
         }
+
+        glfwSetFramebufferSizeCallback(window, resizeCallback);
     }
 
     void initVulkan()
@@ -116,6 +140,9 @@ public:
         initVulkan();
 
         swapchain.init(instance, surface, width, height);
+
+        Input::instance().resizeEvent(width, height);
+
         renderer.init(swapchain, width, height);
 
         mainLoop();

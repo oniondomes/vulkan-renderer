@@ -204,3 +204,26 @@ void Renderer::clean()
         object.clean(_device);
     }
 }
+
+void Renderer::resize(VkRenderPass &renderPass, const int width, const int height)
+{
+    if (width == _screenSize[0] && height == _screenSize[1])
+    {
+        return;
+    }
+
+    vkDestroyPipeline(_device, _objectPipeline, nullptr);
+    vkDestroyPipelineLayout(_device, _objectPipelineLayout, nullptr);
+
+    _screenSize[0] = width;
+    _screenSize[1] = height;
+
+    Pipeline::create(
+        _device,
+        width,
+        height,
+        Object::descriptorSetLayout,
+        _objectPipelineLayout,
+        renderPass,
+        _objectPipeline);
+}

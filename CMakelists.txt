@@ -13,6 +13,7 @@ add_executable(
     src/MeshUtilities.cpp
     src/Renderer.cpp
     src/Pipeline.cpp
+    src/Input.cpp
 )
 
 find_package(Vulkan REQUIRED)

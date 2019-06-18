@@ -23,6 +23,7 @@ public:
         const VkSemaphore &endSemaphore,
         const VkFence &submissionFence);
     void clean();
+    void resize(VkRenderPass &renderPass, const int width, const int height);
 
     ~Renderer();
 
