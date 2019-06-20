@@ -5,9 +5,13 @@ layout(binding = 1) uniform sampler2D texSampler;
 
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec2 fragTexCoord;
+layout(location = 2) in vec3 lightDirection;
+layout(location = 3) in vec3 normal;
 
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    outColor = texture(texSampler, fragTexCoord);
+    vec3 _normal = normalize(vec3(normal));
+    float nDotL = max(dot(lightDirection, _normal), 0.0);
+    outColor = (vec4(vec3(1.0, 1.0, 1.0) * vec3(1.0, 1.0, 1.0) * nDotL, 1.0) + 0.02) * texture(texSampler, fragTexCoord) ;
 }
