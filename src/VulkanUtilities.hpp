@@ -46,6 +46,7 @@ public:
         glm::mat4 model;
         glm::mat4 view;
         glm::mat4 proj;
+        glm::vec3 lightDirection;
     };
 
     static bool enableValidationLayers;

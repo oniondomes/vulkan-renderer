@@ -2,7 +2,7 @@
 #include "Pipeline.hpp"
 
 // Resources paths.
-const std::string MODEL_PATH = "./resources/models/cube.obj";
+const std::string MODEL_PATH = "./resources/models/statue.obj";
 const std::string TEXTURE_PATH = "./resources/textures/cube.png";
 const std::string VERT_SHADER_PATH = "./resources/shaders/vert.spv";
 const std::string FRAG_SHADER_PATH = "./resources/shaders/frag.spv";
@@ -175,8 +175,10 @@ void Renderer::updateUniforms(const uint32_t imageIndex)
     VulkanUtilities::UniformBufferObject ubo = {};
     ubo.model = glm::rotate(glm::mat4(1.0f), (float)_time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     ubo.view = glm::lookAt(glm::vec3(5.0f, 5.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), _screenSize[0] / (float)_screenSize[1], 0.1f, 10.0f);
+    ubo.proj = glm::perspective(glm::radians(45.0f), _screenSize[0] / (float)_screenSize[1], 0.1f, 100.0f);
     ubo.proj[1][1] *= -1;
+
+    ubo.lightDirection = glm::normalize(glm::vec3(0.5, cos(_time),sin(_time)));
 
     // Copy the data in the uniform buffer object to the current uniform buffer.
     void *data;
