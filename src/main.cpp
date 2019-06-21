@@ -15,7 +15,7 @@ static const int HEIGHT = 480;
 static const int MAX_FRAMES_IN_FLIGHT = 2;
 
 static const std::vector<const char *> validationLayers = {
-    "VK_LAYER_LUNARG_standard_validation"};
+    "VK_LAYER_KHRONOS_validation"};
 
 static void resizeCallback(GLFWwindow *window, int width, int height)
 {
