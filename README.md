@@ -1,5 +1,5 @@
 ### Todo
 
-- [ ] shading
+- [x] shading
 - [ ] shadows
 - [ ] controllable camera
