@@ -8,7 +8,7 @@
 class Renderer
 {
 public:
-    Renderer();
+    Renderer() {};
 
     void init(Swapchain &swapchain, const int width, const int heigth);
     void update(const double deltaTime);
@@ -25,7 +25,7 @@ public:
     void clean();
     void resize(VkRenderPass &renderPass, const int width, const int height);
 
-    ~Renderer();
+    ~Renderer() {};
 
 private:
     double _time = 0.0;
