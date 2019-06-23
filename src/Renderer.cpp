@@ -2,18 +2,10 @@
 #include "Pipeline.hpp"
 
 // Resources paths.
-const std::string MODEL_PATH = "./resources/models/cube.obj";
+const std::string MODEL_PATH = "./resources/models/statue.obj";
 const std::string TEXTURE_PATH = "./resources/textures/cube.png";
 const std::string VERT_SHADER_PATH = "./resources/shaders/vert.spv";
 const std::string FRAG_SHADER_PATH = "./resources/shaders/frag.spv";
-
-Renderer::Renderer()
-{
-}
-
-Renderer::~Renderer()
-{
-}
 
 void Renderer::init(Swapchain &swapchain, const int width, const int height)
 {
@@ -50,7 +42,8 @@ void Renderer::init(Swapchain &swapchain, const int width, const int height)
         renderPass,
         _objectPipeline);
 
-    VkDeviceSize bufferSize = sizeof(VulkanUtilities::UniformBufferObject);
+    VkDeviceSize bufferSize = VulkanUtilities::nextOffset(sizeof(VulkanUtilities::UniformBufferObject))
+        + sizeof(VulkanUtilities::LightInfo);
     _uniformBuffers.resize(imageCount);
     _uniformBuffersMemory.resize(imageCount);
 
@@ -74,17 +67,23 @@ void Renderer::init(Swapchain &swapchain, const int width, const int height)
     {
         object.generateDescriptorSets(_device, _descriptorPool, _uniformBuffers, _textureSampler, imageCount);
     }
+
+    // Create descriptor set for light
+
+
 }
 
 void Renderer::createDescriptorPool(uint32_t imageCount)
 {
     // Descriptor sets must be allocated from a descriptor pool.
     // It'll be created every frame
-    std::array<VkDescriptorPoolSize, 2> poolSizes = {};
+    std::array<VkDescriptorPoolSize, 3> poolSizes = {};
     poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[0].descriptorCount = static_cast<uint32_t>(imageCount);
     poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     poolSizes[1].descriptorCount = static_cast<uint32_t>(imageCount);
+    poolSizes[2].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    poolSizes[2].descriptorCount = static_cast<uint32_t>(imageCount);
 
     VkDescriptorPoolCreateInfo poolInfo = {};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -173,15 +172,23 @@ void Renderer::encode(
 void Renderer::updateUniforms(const uint32_t imageIndex)
 {
     VulkanUtilities::UniformBufferObject ubo = {};
-    ubo.model = glm::rotate(glm::mat4(1.0f), (float)_time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(5.0f, 5.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), _screenSize[0] / (float)_screenSize[1], 0.1f, 10.0f);
-    ubo.proj[1][1] *= -1;
+    glm::mat4 model = glm::rotate(glm::mat4(1.0f), (float)_time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 7.0f, 7.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::mat4 proj = glm::perspective(glm::radians(45.0f), _screenSize[0] / (float)_screenSize[1], 0.1f, 100.0f);
+    proj[1][1] *= -1;
 
-    // Copy the data in the uniform buffer object to the current uniform buffer.
+    ubo.mvp = proj * view * model;
+
+    VulkanUtilities::LightInfo lightInfo = {};
+    lightInfo.direction = glm::normalize(glm::vec3(1.0f, 1.0f, 1.0f));
+
     void *data;
-    vkMapMemory(_device, _uniformBuffersMemory[imageIndex], 0, sizeof(ubo), 0, &data);
+    vkMapMemory(_device, _uniformBuffersMemory[imageIndex], 0, sizeof(ubo) + sizeof(lightInfo), 0, &data);
     memcpy(data, &ubo, sizeof(ubo));
+    memcpy(
+        static_cast<char*>(data) + VulkanUtilities::nextOffset(sizeof(VulkanUtilities::UniformBufferObject)),
+        &lightInfo,
+        sizeof(lightInfo));
     vkUnmapMemory(_device, _uniformBuffersMemory[imageIndex]);
 }
 

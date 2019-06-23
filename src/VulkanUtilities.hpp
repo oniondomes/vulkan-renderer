@@ -7,6 +7,7 @@ class VulkanUtilities
 {
 private:
     static VkDebugUtilsMessengerEXT _debugMessenger;
+    static VkDeviceSize _minUniformBufferOffsetAlignment;
 
 public:
     struct SwapchainSupportDetails
@@ -43,9 +44,12 @@ public:
 
     struct UniformBufferObject
     {
-        glm::mat4 model;
-        glm::mat4 view;
-        glm::mat4 proj;
+        glm::mat4 mvp;
+    };
+
+    struct LightInfo
+    {
+        glm::vec3 direction;
     };
 
     static bool enableValidationLayers;
@@ -199,4 +203,6 @@ public:
         VulkanUtilities::QueueFamilyIndices &queues,
         VkSwapchainKHR &swapchain,
         VkSwapchainKHR oldSwapchain = VK_NULL_HANDLE);
+
+    static VkDeviceSize nextOffset(size_t size);
 };

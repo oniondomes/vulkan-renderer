@@ -11,6 +11,7 @@ const std::vector<const char *> validationLayers = {
     "VK_LAYER_LUNARG_standard_validation"};
 
 bool VulkanUtilities::enableValidationLayers = true;
+VkDeviceSize VulkanUtilities::_minUniformBufferOffsetAlignment = 0;
 
 VkDebugUtilsMessengerEXT VulkanUtilities::_debugMessenger;
 
@@ -264,6 +265,10 @@ int VulkanUtilities::pickPhysicalDevice(
     {
         throw std::runtime_error("Unable to find suitable GPU.");
     }
+
+    VkPhysicalDeviceProperties properties;
+    vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+    _minUniformBufferOffsetAlignment = properties.limits.minUniformBufferOffsetAlignment;
 
     return 0;
 }
@@ -1083,7 +1088,6 @@ void VulkanUtilities::createInstance(VkInstance &instance, bool enableValidation
     createMessengerInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     createMessengerInfo.pfnUserCallback = debugCallback;
 
-
     if (CreateDebugUtilsMessengerEXT(instance, &createMessengerInfo, nullptr, &_debugMessenger) != VK_SUCCESS)
     {
         throw std::runtime_error("Unable to setup debug report callback.");
@@ -1139,3 +1143,19 @@ void VulkanUtilities::createSwapchain(
         throw std::runtime_error("Unable to create swapchain.");
     }
 };
+
+VkDeviceSize VulkanUtilities::nextOffset(size_t size)
+{
+    if (_minUniformBufferOffsetAlignment == 0)
+    {
+        return size;
+    }
+
+    int remainder = size % _minUniformBufferOffsetAlignment;
+    if (remainder == 0)
+    {
+        return size;
+    }
+
+    return size + _minUniformBufferOffsetAlignment - remainder;
+}
