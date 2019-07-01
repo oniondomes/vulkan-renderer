@@ -173,11 +173,10 @@ void Renderer::updateUniforms(const uint32_t imageIndex)
 {
     VulkanUtilities::UniformBufferObject ubo = {};
     glm::mat4 model = glm::rotate(glm::mat4(1.0f), (float)_time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 7.0f, 7.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    glm::mat4 proj = glm::perspective(glm::radians(45.0f), _screenSize[0] / (float)_screenSize[1], 0.1f, 100.0f);
-    proj[1][1] *= -1;
+    glm::mat4 viewProj = _camera.getViewProjectionMatrix();
 
-    ubo.mvp = proj * view * model;
+    ubo.mvp = viewProj * model;
+    ubo.normalMatrix = glm::transpose(glm::inverse(model));
 
     VulkanUtilities::LightInfo lightInfo = {};
     lightInfo.direction = glm::normalize(glm::vec3(1.0f, 1.0f, 1.0f));
