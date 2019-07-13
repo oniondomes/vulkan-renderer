@@ -2,7 +2,7 @@
 #include "Pipeline.hpp"
 
 // Resources paths.
-const std::string MODEL_PATH = "./resources/models/statue.obj";
+const std::string MODEL_PATH = "./resources/models/plane.obj";
 const std::string TEXTURE_PATH = "./resources/textures/cube.png";
 const std::string VERT_SHADER_PATH = "./resources/shaders/vert.spv";
 const std::string FRAG_SHADER_PATH = "./resources/shaders/frag.spv";
@@ -67,10 +67,6 @@ void Renderer::init(Swapchain &swapchain, const int width, const int height)
     {
         object.generateDescriptorSets(_device, _descriptorPool, _uniformBuffers, _textureSampler, imageCount);
     }
-
-    // Create descriptor set for light
-
-
 }
 
 void Renderer::createDescriptorPool(uint32_t imageCount)
@@ -102,6 +98,7 @@ void Renderer::createDescriptorPool(uint32_t imageCount)
 void Renderer::update(const double deltaTime)
 {
     _time += deltaTime;
+    _camera.update();
 }
 
 void Renderer::encode(
@@ -172,15 +169,14 @@ void Renderer::encode(
 void Renderer::updateUniforms(const uint32_t imageIndex)
 {
     VulkanUtilities::UniformBufferObject ubo = {};
-    glm::mat4 model = glm::rotate(glm::mat4(1.0f), (float)_time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 7.0f, 7.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    glm::mat4 proj = glm::perspective(glm::radians(45.0f), _screenSize[0] / (float)_screenSize[1], 0.1f, 100.0f);
-    proj[1][1] *= -1;
+    glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    glm::mat4 viewProj = _camera.getViewProjectionMatrix();
 
-    ubo.mvp = proj * view * model;
+    ubo.mvp = viewProj * model;
+    ubo.normalMatrix = glm::transpose(glm::inverse(model));
 
     VulkanUtilities::LightInfo lightInfo = {};
-    lightInfo.direction = glm::normalize(glm::vec3(1.0f, 1.0f, 1.0f));
+    lightInfo.direction = glm::normalize(glm::vec3(0.2f, 1.0f, 1.0f));
 
     void *data;
     vkMapMemory(_device, _uniformBuffersMemory[imageIndex], 0, sizeof(ubo) + sizeof(lightInfo), 0, &data);
