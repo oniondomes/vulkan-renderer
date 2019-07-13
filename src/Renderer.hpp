@@ -4,6 +4,7 @@
 #include "Swapchain.hpp"
 #include "MeshUtilities.hpp"
 #include "Object.hpp"
+#include "Camera.hpp"
 
 class Renderer
 {
@@ -32,6 +33,8 @@ private:
 
     VkDevice _device;
     VkSampler _textureSampler;
+
+    Camera _camera;
 
     glm::vec2 _screenSize;
     std::vector<Object> _objects;

@@ -22,6 +22,16 @@ static void resizeCallback(GLFWwindow *window, int width, int height)
     Input::instance().resizeEvent(width, height);
 }
 
+static void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
+{
+    Input::instance().keyDownEvent(key, action);
+}
+
+static void mouseCallback(GLFWwindow *window, double xPos, double yPos)
+{
+    Input::instance().mouseMoveEvent(xPos, yPos);
+}
+
 class VulkanApp
 {
 private:
@@ -34,6 +44,7 @@ private:
     VkSurfaceKHR surface;
     Swapchain swapchain;
     Renderer renderer;
+    Camera camera;
 
     VkRenderPassBeginInfo renderPassInfo;
 
@@ -108,6 +119,7 @@ public:
 
         window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
         glfwSetWindowUserPointer(window, this);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         glfwGetFramebufferSize(window, &width, &height);
 
         if (!window)
@@ -116,6 +128,8 @@ public:
         }
 
         glfwSetFramebufferSizeCallback(window, resizeCallback);
+        glfwSetKeyCallback(window, keyCallback);
+        glfwSetCursorPosCallback(window, mouseCallback);
     }
 
     void initVulkan()
