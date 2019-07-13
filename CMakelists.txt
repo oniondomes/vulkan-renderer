@@ -14,6 +14,7 @@ add_executable(
     src/Renderer.cpp
     src/Pipeline.cpp
     src/Input.cpp
+    src/Camera.cpp
 )
 
 find_package(Vulkan REQUIRED)
