@@ -50,9 +50,6 @@ void Input::mouseMoveEvent(double xPos, double yPos)
 
     _cursorOffset.x = xOffset;
     _cursorOffset.y = yOffset;
-
-    std::cout << _cursorOffset.x << " : " ;
-    std::cout << _cursorOffset.y << std::endl;
 }
 
 bool Input::hasOffset() const {
