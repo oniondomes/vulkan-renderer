@@ -2,4 +2,4 @@
 
 - [x] shading
 - [ ] shadows
-- [ ] controllable camera
+- [x] controllable camera
