@@ -6,7 +6,7 @@
 class Object
 {
 public:
-    Object(std::string &name, const std::string *path);
+    Object(std::string &name, const std::string &path);
 
     // TODO: all params could be constant
     void load(

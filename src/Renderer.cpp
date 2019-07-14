@@ -2,8 +2,9 @@
 #include "Pipeline.hpp"
 
 // Resources paths.
-const std::string MODEL_PATH = "./resources/models/plane.obj";
-const std::string TEXTURE_PATH = "./resources/textures/cube.png";
+const std::string CUBE_MODEL_PATH = "./resources/models/cube.obj";
+const std::string PLANE_MODEL_PATH = "./resources/models/plane.obj";
+const std::string TEXTURE_PATH = "./resources/textures/grid.png";
 const std::string VERT_SHADER_PATH = "./resources/shaders/vert.spv";
 const std::string FRAG_SHADER_PATH = "./resources/shaders/frag.spv";
 
@@ -17,9 +18,13 @@ void Renderer::init(Swapchain &swapchain, const int width, const int height)
     uint32_t imageCount = swapchain.imageCount;
     _device = swapchain.device;
 
-    std::string name("cube");
-    Object cube(name, &MODEL_PATH);
+    std::string planeName = std::string("plane");
+    Object plane(planeName, PLANE_MODEL_PATH);
 
+    std::string cubeName = std::string("cube");
+    Object cube(cubeName, CUBE_MODEL_PATH);
+
+    _objects.emplace_back(plane);
     _objects.emplace_back(cube);
 
     _screenSize = glm::vec2(width, height);
@@ -73,7 +78,7 @@ void Renderer::createDescriptorPool(uint32_t imageCount)
 {
     // Descriptor sets must be allocated from a descriptor pool.
     // It'll be created every frame
-    std::array<VkDescriptorPoolSize, 3> poolSizes = {};
+    std::array<VkDescriptorPoolSize, 4> poolSizes = {};
     poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[0].descriptorCount = static_cast<uint32_t>(imageCount);
     poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;

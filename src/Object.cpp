@@ -4,10 +4,10 @@
 
 VkDescriptorSetLayout Object::descriptorSetLayout = VK_NULL_HANDLE;
 
-Object::Object(std::string &name, const std::string *path)
+Object::Object(std::string &name, const std::string &path)
 {
     _name = name;
-    _path = path;
+    _path = &path;
     params.model = glm::mat4(0.0f);
 }
 
@@ -44,7 +44,7 @@ void Object::load(
         graphicsQueue);
 
     // TODO: Can I cast this inline?
-    std::string path = "./resources/textures/cube.png";
+    std::string path = "./resources/textures/grid.png";
 
     VulkanUtilities::createTextureImage(
         path,
@@ -87,7 +87,7 @@ void Object::createDescriptorSetLayout(VkDevice &device, VkSampler &textureSampl
     lightBinding.descriptorCount = 1;
     lightBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT;
 
-    std::array<VkDescriptorSetLayoutBinding, 3> bindings = {uboLayoutBinding, samplerLayoutBinding, lightBinding};
+    std::array<VkDescriptorSetLayoutBinding, 4> bindings = {uboLayoutBinding, samplerLayoutBinding, lightBinding};
 
     // Bindings must be combined into a VkDescriptorSetLayout object
     VkDescriptorSetLayoutCreateInfo layoutInfo = {};
