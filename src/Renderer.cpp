@@ -27,6 +27,8 @@ void Renderer::init(Swapchain &swapchain, const int width, const int height)
     _objects.emplace_back(plane);
     _objects.emplace_back(cube);
 
+    _objects.back().info.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.5f, 0.0f));
+
     _screenSize = glm::vec2(width, height);
 
     VulkanUtilities::createTextureSampler(_textureSampler, _device);
@@ -47,8 +49,7 @@ void Renderer::init(Swapchain &swapchain, const int width, const int height)
         renderPass,
         _objectPipeline);
 
-    VkDeviceSize bufferSize = VulkanUtilities::nextOffset(sizeof(VulkanUtilities::UniformBufferObject))
-        + sizeof(VulkanUtilities::LightInfo);
+    VkDeviceSize bufferSize = VulkanUtilities::nextOffset(sizeof(VulkanUtilities::CameraInfo)) + sizeof(VulkanUtilities::LightInfo);
     _uniformBuffers.resize(imageCount);
     _uniformBuffersMemory.resize(imageCount);
 
@@ -76,15 +77,17 @@ void Renderer::init(Swapchain &swapchain, const int width, const int height)
 
 void Renderer::createDescriptorPool(uint32_t imageCount)
 {
+    // Two pools for each object. Uniform and sampler
+    const uint32_t objectsCount = static_cast<uint32_t>(_objects.size() * 2) + 1;
     // Descriptor sets must be allocated from a descriptor pool.
     // It'll be created every frame
-    std::array<VkDescriptorPoolSize, 4> poolSizes = {};
+    std::array<VkDescriptorPoolSize, 3> poolSizes = {};
     poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    poolSizes[0].descriptorCount = static_cast<uint32_t>(imageCount);
+    poolSizes[0].descriptorCount = objectsCount * imageCount;
     poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    poolSizes[1].descriptorCount = static_cast<uint32_t>(imageCount);
+    poolSizes[1].descriptorCount = objectsCount * imageCount;
     poolSizes[2].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    poolSizes[2].descriptorCount = static_cast<uint32_t>(imageCount);
+    poolSizes[2].descriptorCount = objectsCount * imageCount;
 
     VkDescriptorPoolCreateInfo poolInfo = {};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -92,7 +95,7 @@ void Renderer::createDescriptorPool(uint32_t imageCount)
     poolInfo.pPoolSizes = poolSizes.data();
 
     // Specify maximum number of descriptor sets that may be allocated.
-    poolInfo.maxSets = static_cast<uint32_t>(imageCount);
+    poolInfo.maxSets = objectsCount * imageCount;
 
     if (vkCreateDescriptorPool(_device, &poolInfo, nullptr, &_descriptorPool) != VK_SUCCESS)
     {
@@ -131,7 +134,7 @@ void Renderer::encode(
     }
 
     std::array<VkClearValue, 2> clearValues = {};
-    clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+    clearValues[0].color = {1.0f, 1.0f, 1.0f, 1.0f};
     clearValues[1].depthStencil = {1.0f, 0};
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -173,21 +176,17 @@ void Renderer::encode(
 
 void Renderer::updateUniforms(const uint32_t imageIndex)
 {
-    VulkanUtilities::UniformBufferObject ubo = {};
-    glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    glm::mat4 viewProj = _camera.getViewProjectionMatrix();
-
-    ubo.mvp = viewProj * model;
-    ubo.normalMatrix = glm::transpose(glm::inverse(model));
+    VulkanUtilities::CameraInfo cameraInfo = {};
+    cameraInfo.viewProjection = _camera.getViewProjectionMatrix();
 
     VulkanUtilities::LightInfo lightInfo = {};
     lightInfo.direction = glm::normalize(glm::vec3(0.2f, 1.0f, 1.0f));
 
     void *data;
-    vkMapMemory(_device, _uniformBuffersMemory[imageIndex], 0, sizeof(ubo) + sizeof(lightInfo), 0, &data);
-    memcpy(data, &ubo, sizeof(ubo));
+    vkMapMemory(_device, _uniformBuffersMemory[imageIndex], 0, sizeof(cameraInfo) + sizeof(lightInfo), 0, &data);
+    memcpy(data, &cameraInfo, sizeof(cameraInfo));
     memcpy(
-        static_cast<char*>(data) + VulkanUtilities::nextOffset(sizeof(VulkanUtilities::UniformBufferObject)),
+        static_cast<char *>(data) + VulkanUtilities::nextOffset(sizeof(VulkanUtilities::CameraInfo)),
         &lightInfo,
         sizeof(lightInfo));
     vkUnmapMemory(_device, _uniformBuffersMemory[imageIndex]);

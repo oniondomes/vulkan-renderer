@@ -2,6 +2,7 @@
 #define Object_hpp
 
 #include "common.hpp"
+#include "VulkanUtilities.hpp"
 
 class Object
 {
@@ -34,7 +35,7 @@ public:
     VkBuffer vertexBuffer;
     VkBuffer indexBuffer;
     uint32_t indicesCount;
-    ObjectParams params;
+    VulkanUtilities::ObjectInfo info;
 
 private:
     std::string _name;
@@ -46,8 +47,10 @@ private:
     VkDeviceMemory _vertexBufferMemory;
     VkDeviceMemory _indexBufferMemory;
     VkDeviceMemory _textureImageMemory;
+    VkDeviceMemory _objectBufferMemory;
 
     VkBuffer _stagingBuffer;
+    VkBuffer _objectBuffer;
     VkDeviceMemory _stagingBufferMemory;
 
     std::vector<VkDescriptorSet> _descriptorSets;

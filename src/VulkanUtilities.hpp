@@ -42,10 +42,13 @@ public:
         uint32_t imageCount;
     };
 
-    struct UniformBufferObject
+    struct ObjectInfo {
+        glm::mat4 model;
+    };
+
+    struct CameraInfo
     {
-        glm::mat4 mvp;
-        glm::mat4 normalMatrix;
+        glm::mat4 viewProjection;
     };
 
     struct LightInfo

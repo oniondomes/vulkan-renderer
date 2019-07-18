@@ -1,6 +1,5 @@
 #include "Object.hpp"
 #include "MeshUtilities.hpp"
-#include "VulkanUtilities.hpp"
 
 VkDescriptorSetLayout Object::descriptorSetLayout = VK_NULL_HANDLE;
 
@@ -8,7 +7,8 @@ Object::Object(std::string &name, const std::string &path)
 {
     _name = name;
     _path = &path;
-    params.model = glm::mat4(0.0f);
+
+    info.model = glm::mat4(1.0f);
 }
 
 Object::~Object()
@@ -43,6 +43,17 @@ void Object::load(
         commandPool,
         graphicsQueue);
 
+    VkDeviceSize objectBufferSize = sizeof(info);
+
+    VulkanUtilities::createBuffer(
+        device,
+        physicalDevice,
+        objectBufferSize,
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        _objectBuffer,
+        _objectBufferMemory);
+
     // TODO: Can I cast this inline?
     std::string path = "./resources/textures/grid.png";
 
@@ -66,12 +77,12 @@ void Object::load(
 void Object::createDescriptorSetLayout(VkDevice &device, VkSampler &textureSampler)
 {
     // Describe binding for ubo used in the shader
-    VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-    uboLayoutBinding.binding = 0;
-    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    uboLayoutBinding.descriptorCount = 1;
-    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    uboLayoutBinding.pImmutableSamplers = nullptr;
+    VkDescriptorSetLayoutBinding cameraBinding = {};
+    cameraBinding.binding = 0;
+    cameraBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    cameraBinding.descriptorCount = 1;
+    cameraBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    cameraBinding.pImmutableSamplers = nullptr;
 
     // Sampler binding
     VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
@@ -87,7 +98,18 @@ void Object::createDescriptorSetLayout(VkDevice &device, VkSampler &textureSampl
     lightBinding.descriptorCount = 1;
     lightBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT;
 
-    std::array<VkDescriptorSetLayoutBinding, 4> bindings = {uboLayoutBinding, samplerLayoutBinding, lightBinding};
+    VkDescriptorSetLayoutBinding objectBinding = {};
+    objectBinding.binding = 3;
+    objectBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    objectBinding.descriptorCount = 1;
+    objectBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+    std::array<VkDescriptorSetLayoutBinding, 4> bindings = {
+        cameraBinding,
+        samplerLayoutBinding,
+        lightBinding,
+        objectBinding
+    };
 
     // Bindings must be combined into a VkDescriptorSetLayout object
     VkDescriptorSetLayoutCreateInfo layoutInfo = {};
@@ -127,11 +149,11 @@ void Object::generateDescriptorSets(
         VkDescriptorBufferInfo cameraInfo = {};
         cameraInfo.buffer = uniformBuffers[i];
         cameraInfo.offset = 0;
-        cameraInfo.range = sizeof(VulkanUtilities::UniformBufferObject);
+        cameraInfo.range = sizeof(VulkanUtilities::CameraInfo);
 
         VkDescriptorBufferInfo lightInfo = {};
         lightInfo.buffer = uniformBuffers[i];
-        lightInfo.offset = VulkanUtilities::nextOffset(sizeof(VulkanUtilities::UniformBufferObject));
+        lightInfo.offset = VulkanUtilities::nextOffset(sizeof(VulkanUtilities::CameraInfo));
         lightInfo.range = sizeof(VulkanUtilities::LightInfo);
 
         VkDescriptorImageInfo imageInfo = {};
@@ -139,7 +161,18 @@ void Object::generateDescriptorSets(
         imageInfo.imageView = _textureImageView;
         imageInfo.sampler = textureSampler;
 
-        std::array<VkWriteDescriptorSet, 3> descriptorWrites = {};
+        void *data;
+        vkMapMemory(device, _objectBufferMemory, 0, sizeof(info), 0, &data);
+        memcpy(data, &info, sizeof(VulkanUtilities::ObjectInfo));
+
+        vkUnmapMemory(device, _objectBufferMemory);
+
+        VkDescriptorBufferInfo objectInfo = {};
+        objectInfo.buffer = _objectBuffer;
+        objectInfo.offset = 0;
+        objectInfo.range = sizeof(VulkanUtilities::ObjectInfo);
+
+        std::array<VkWriteDescriptorSet, 4> descriptorWrites = {};
 
         descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrites[0].dstSet = _descriptorSets[i];
@@ -164,6 +197,14 @@ void Object::generateDescriptorSets(
         descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         descriptorWrites[2].descriptorCount = 1;
         descriptorWrites[2].pBufferInfo = &lightInfo;
+
+        descriptorWrites[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[3].dstSet = _descriptorSets[i];
+        descriptorWrites[3].dstBinding = 3;
+        descriptorWrites[3].dstArrayElement = 0;
+        descriptorWrites[3].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrites[3].descriptorCount = 1;
+        descriptorWrites[3].pBufferInfo = &objectInfo;
 
         vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
